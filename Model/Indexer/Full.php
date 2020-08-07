@@ -1,7 +1,7 @@
 <?php
 namespace Boxalino\Exporter\Model\Indexer;
 
-use Boxalino\Exporter\Model\Exporter\Process\Full as ProcessManager;
+use Boxalino\Exporter\Model\Process\Full as ProcessManager;
 
 /**
  * Class Full
@@ -15,7 +15,7 @@ class Full implements \Magento\Framework\Indexer\ActionInterface,
     /**
      * Exporter ID in configuration
      */
-    const INDEXER_ID = 'boxalino_indexer';
+    const INDEXER_ID = 'boxalino_exporter';
 
     /**
      * Exporter type

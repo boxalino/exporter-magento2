@@ -1,7 +1,7 @@
 <?php
 namespace Boxalino\Exporter\Model\ResourceModel\Component;
 
-use Boxalino\Exporter\Api\TransactionExporterResourceInterface;
+use Boxalino\Exporter\Api\Resource\TransactionExporterResourceInterface;
 use Magento\Framework\DB\Select;
 use Magento\Framework\Config\ConfigOptionsListConstants;
 

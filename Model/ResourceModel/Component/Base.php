@@ -1,7 +1,7 @@
 <?php
 namespace Boxalino\Exporter\Model\ResourceModel\Component;
 
-use Boxalino\Exporter\Api\Component\BaseExporterResourceInterface;
+use Boxalino\Exporter\Api\Resource\BaseExporterResourceInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use \Psr\Log\LoggerInterface;
 use \Magento\Framework\App\ResourceConnection;

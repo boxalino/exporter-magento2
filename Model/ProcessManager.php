@@ -1,8 +1,7 @@
 <?php
-namespace Boxalino\Exporter\Model\Exporter;
+namespace Boxalino\Exporter\Model;
 
 use Boxalino\Exporter\Api\ExporterInterface;
-use Boxalino\Exporter\Api\ExporterResourceInterface;
 use Boxalino\Exporter\Model\ResourceModel\ProcessManager as ProcessManagerResource;
 use Boxalino\Exporter\Service\Util\Configuration;
 use Boxalino\Exporter\Model\Indexer\Delta;
@@ -64,7 +63,7 @@ abstract class ProcessManager
      * @param LoggerInterface $logger
      * @param \Magento\Indexer\Model\Indexer $indexer
      * @param Configuration $bxIndexConfig
-     * @param ExporterResourceInterface $exporterResource
+     * @param ExporterInterface $exporterResource
      */
     public function __construct(
         LoggerInterface $logger,

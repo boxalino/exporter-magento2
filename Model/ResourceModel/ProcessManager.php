@@ -52,7 +52,7 @@ class ProcessManager
      * @param $updated
      * @return int
      */
-    public function updateIndexerUpdatedAt(int $id, string $updated) : int
+    public function updateIndexerUpdatedAt(string $id, string $updated) : int
     {
         $dataBind = [
             "updated" => $updated,
@@ -69,7 +69,7 @@ class ProcessManager
      * @param $id
      * @return string
      */
-    public function getLatestUpdatedAtByIndexerId(int $id) : string
+    public function getLatestUpdatedAtByIndexerId(string $id) : string
     {
         $select = $this->adapter->select()
             ->from($this->adapter->getTableName("boxalino_exporter"), ["updated"])
@@ -84,7 +84,7 @@ class ProcessManager
      * @param $id
      * @return string
      */
-    public function getAffectedEntityIds(int $id) : string
+    public function getAffectedEntityIds(string $id) : string
     {
         $select = $this->adapter->select()
             ->from($this->adapter->getTableName("boxalino_exporter"), ["entity_id"])
@@ -100,7 +100,7 @@ class ProcessManager
      * @param string $ids
      * @return int
      */
-    public function updateAffectedEntityIds(int $id, string $ids) : int
+    public function updateAffectedEntityIds(string $id, string $ids) : int
     {
         $dataBind = [
             "entity_id" => $ids,

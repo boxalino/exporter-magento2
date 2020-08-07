@@ -1,7 +1,7 @@
 <?php
-namespace Boxalino\Exporter\Model\Exporter\Process;
+namespace Boxalino\Exporter\Model\Process;
 
-use Boxalino\Exporter\Model\Exporter\ProcessManager;
+use Boxalino\Exporter\Model\ProcessManager;
 
 /**
  * Class Delta
@@ -14,7 +14,7 @@ class Delta extends ProcessManager
     /**
      * Indexer ID in configuration
      */
-    const INDEXER_ID = 'boxalino_indexer_delta';
+    const INDEXER_ID = 'boxalino_exporter_delta';
 
     const INDEXER_TYPE = 'delta';
 

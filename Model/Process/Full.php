@@ -1,7 +1,7 @@
 <?php
-namespace Boxalino\Exporter\Model\Exporter\Process;
+namespace Boxalino\Exporter\Model\Process;
 
-use Boxalino\Exporter\Model\Exporter\ProcessManager;
+use Boxalino\Exporter\Model\ProcessManager;
 
 /**
  * Class Full
@@ -13,7 +13,7 @@ class Full extends ProcessManager
     /**
      * Indexer ID in configuration
      */
-    const INDEXER_ID = 'boxalino_indexer';
+    const INDEXER_ID = 'boxalino_exporter';
 
     /**
      * Indexer type

@@ -1,5 +1,5 @@
 <?php
-namespace Boxalino\Exporter\Model\Exporter;
+namespace Boxalino\Exporter\Model;
 
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer as ObserverObject;

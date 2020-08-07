@@ -1,7 +1,7 @@
 <?php
 namespace Boxalino\Exporter\Model\Indexer;
 
-use Boxalino\Exporter\Model\Exporter\Process\Delta as ProcessManager;
+use Boxalino\Exporter\Model\Process\Delta as ProcessManager;
 use Psr\Log\LoggerInterface;
 
 /**

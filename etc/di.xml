@@ -4,8 +4,8 @@
     <preference for="Boxalino\Exporter\Api\Component\ProductExporterInterface" type="Boxalino\Exporter\Service\Component\Product"/>
     <preference for="Boxalino\Exporter\Api\Component\CustomerExporterInterface" type="Boxalino\Exporter\Service\Component\Customer"/>
     <preference for="Boxalino\Exporter\Api\Component\TransactionExporterInterface" type="Boxalino\Exporter\Service\Component\Transaction"/>
-    <preference for="Boxalino\Exporter\Api\Resource\CustomerExporterResourceInterface" type="Boxalino\Exporter\Model\ResourceModel\Customer"/>
-    <preference for="Boxalino\Exporter\Api\Resource\ProductExporterResourceInterface" type="Boxalino\Exporter\Model\ResourceModel\Product"/>
-    <preference for="Boxalino\Exporter\Api\Resource\TransactionExporterResourceInterface" type="Boxalino\Exporter\Model\ResourceModel\Transaction"/>
-    <preference for="Boxalino\Exporter\Api\Resource\BaseExporterResourceInterface" type="Boxalino\Exporter\Model\ResourceModel\Base"/>
+    <preference for="Boxalino\Exporter\Api\Resource\CustomerExporterResourceInterface" type="Boxalino\Exporter\Model\ResourceModel\Component\Customer"/>
+    <preference for="Boxalino\Exporter\Api\Resource\ProductExporterResourceInterface" type="Boxalino\Exporter\Model\ResourceModel\Component\Product"/>
+    <preference for="Boxalino\Exporter\Api\Resource\TransactionExporterResourceInterface" type="Boxalino\Exporter\Model\ResourceModel\Component\Transaction"/>
+    <preference for="Boxalino\Exporter\Api\Resource\BaseExporterResourceInterface" type="Boxalino\Exporter\Model\ResourceModel\Component\Base"/>
 </config>

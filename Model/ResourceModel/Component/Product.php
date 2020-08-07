@@ -1,7 +1,7 @@
 <?php
 namespace Boxalino\Exporter\Model\ResourceModel\Component;
 
-use Boxalino\Exporter\Api\ProductExporterResourceInterface;
+use Boxalino\Exporter\Api\Resource\ProductExporterResourceInterface;
 
 /**
  * Keeps most of db access for the exporter class
