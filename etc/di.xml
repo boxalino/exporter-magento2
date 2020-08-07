@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="Boxalino\Exporter\Api\ExporterInterface" type="Boxalino\Exporter\Service\Exporter"/>
+    <preference for="Boxalino\Exporter\Api\Component\ProductExporterInterface" type="Boxalino\Exporter\Service\Component\Product"/>
+    <preference for="Boxalino\Exporter\Api\Component\CustomerExporterInterface" type="Boxalino\Exporter\Service\Component\Customer"/>
+    <preference for="Boxalino\Exporter\Api\Component\TransactionExporterInterface" type="Boxalino\Exporter\Service\Component\Transaction"/>
+    <preference for="Boxalino\Exporter\Api\Resource\CustomerExporterResourceInterface" type="Boxalino\Exporter\Model\ResourceModel\Customer"/>
+    <preference for="Boxalino\Exporter\Api\Resource\ProductExporterResourceInterface" type="Boxalino\Exporter\Model\ResourceModel\Product"/>
+    <preference for="Boxalino\Exporter\Api\Resource\TransactionExporterResourceInterface" type="Boxalino\Exporter\Model\ResourceModel\Transaction"/>
+    <preference for="Boxalino\Exporter\Api\Resource\BaseExporterResourceInterface" type="Boxalino\Exporter\Model\ResourceModel\Base"/>
+</config>

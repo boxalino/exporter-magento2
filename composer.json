@@ -1,0 +1,22 @@
+{
+    "name": "boxalino/exporter-magento2",
+    "description": "Boxalino Data Exporter for Magento2 plugin",
+    "type": "magento2-module",
+    "homepage": "http://www.boxalino.com",
+    "keywords": ["boxalino", "exporter","magento"],
+    "support": {
+        "email": "support@boxalino.com"
+    },
+    "license": ["MIT"],
+    "require": {
+        "php": ">=7.2",
+        "magento/module-indexer": "*",
+        "magento/framework": "*"
+    },
+    "autoload": {
+        "files": ["registration.php"],
+        "psr-4": {
+            "Boxalino\\Exporter\\": ""
+        }
+    }
+}

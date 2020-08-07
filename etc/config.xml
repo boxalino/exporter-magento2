@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <boxalino_exporter>
+            <general>
+                <enabled>0</enabled>
+            </general>
+            <scheduler>
+                <enabled>0</enabled>
+                <full_min_interval>120</full_min_interval>
+                <delta_min_interval>60</delta_min_interval>
+                <delta_start>7</delta_start>
+                <delta_end>23</delta_end>
+            </scheduler>
+            <products>
+                <export_url>1</export_url>
+                <export_images>1</export_images>
+            </products>
+            <customers>
+                <enabled>1</enabled>
+            </customers>
+            <transactions>
+                <enabled>1</enabled>
+            </transactions>
+            <advanced>
+                <timeout>3000</timeout>
+                <publish_configuration_changes>1</publish_configuration_changes>
+                <curl_connection_timeout>1000</curl_connection_timeout>
+            </advanced>
+        </boxalino_exporter>
+    </default>
+</config>

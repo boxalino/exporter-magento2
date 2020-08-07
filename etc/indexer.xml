@@ -1,0 +1,10 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Indexer/etc/indexer.xsd">
+    <indexer id="boxalino_exporter" view_id="boxalino_exporter" class="Boxalino\Exporter\Model\Indexer\Full">
+        <title translate="true">Boxalino Exporter</title>
+        <description translate="true">Export Products, Customers and Transactions to Boxalino Data Intelligence</description>
+    </indexer>
+    <indexer id="boxalino_exporter_delta" view_id="boxalino_exporter_delta" class="Boxalino\Exporter\Model\Indexer\Delta">
+        <title translate="true">Boxalino Delta Exporter</title>
+        <description translate="true">Delta Export for Products to Boxalino Data Intelligence</description>
+    </indexer>
+</config>
