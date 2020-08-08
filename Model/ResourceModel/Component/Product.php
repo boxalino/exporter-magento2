@@ -12,6 +12,17 @@ use Boxalino\Exporter\Api\Resource\ProductExporterResourceInterface;
 class Product  extends Base
     implements ProductExporterResourceInterface
 {
+
+    /**
+     * @var []
+     */
+    protected $exportIds = [];
+
+    /**
+     * @var bool
+     */
+    protected $isDelta = false;
+
     /**
      * @return array
      */
@@ -585,7 +596,7 @@ class Product  extends Base
      */
     protected function getParentTitleInformationSql(int $storeId) : \Magento\Framework\DB\Select
     {
-        $attrId = $this->getAttributeIdByAttributeCodeAndEntityType("title", \Magento\Catalog\Setup\CategorySetup::CATALOG_PRODUCT_ENTITY_TYPE_ID);
+        $attrId = $this->getAttributeIdByAttributeCodeAndEntityType("name", \Magento\Catalog\Setup\CategorySetup::CATALOG_PRODUCT_ENTITY_TYPE_ID);
         $select = $this->adapter->select()
             ->from(
                 ['c_p_e' => $this->adapter->getTableName('catalog_product_entity')],
@@ -612,17 +623,17 @@ class Product  extends Base
      */
     public function getParentTitleInformationByStore(int $storeId) : array
     {
-        $selectTwo = $this->getParentTitleInformationSql($storeId);
-        $selectOne = clone $selectTwo;
-        $selectOne->join(
-            ['t_d' => $this->adapter->getTableName('catalog_product_entity_varchar')],
-            't_d.entity_id = c_p_e.entity_id AND c_p_r.parent_id IS NULL',
-            ['t_d.value', 't_d.store_id']
-        );
+        $selectOne = $this->getParentTitleInformationSql($storeId);
+        $selectTwo = clone $selectOne;
         $selectTwo->join(
             ['t_d' => $this->adapter->getTableName('catalog_product_entity_varchar')],
+            't_d.entity_id = c_p_e.entity_id AND c_p_r.parent_id IS NULL',
+            [new \Zend_Db_Expr('LOWER(t_d.value) as value'), 't_d.store_id']
+        );
+        $selectOne->join(
+            ['t_d' => $this->adapter->getTableName('catalog_product_entity_varchar')],
             't_d.entity_id = c_p_r.parent_id',
-            ['t_d.value', 't_d.store_id']
+            [new \Zend_Db_Expr('LOWER(t_d.value) as value'), 't_d.store_id']
         );
 
         $select = $this->adapter->select()
@@ -636,12 +647,12 @@ class Product  extends Base
 
     /**
      * @param int $storeId
-     * @param string $attrId
      * @param array $duplicateIds
      * @return array
      */
-    public function getParentTitleInformationByStoreAttrDuplicateIds(int $storeId, string $attrId, array $duplicateIds = []) : array
+    public function getParentTitleInformationByStoreAndDuplicateIds(int $storeId, array $duplicateIds = []) : array
     {
+        $attrId = $this->getAttributeIdByAttributeCodeAndEntityType('name', \Magento\Catalog\Setup\CategorySetup::CATALOG_PRODUCT_ENTITY_TYPE_ID);
         $select = $this->adapter->select()
             ->from(
                 ['c_p_e' => $this->adapter->getTableName('catalog_product_entity')],
@@ -738,5 +749,32 @@ class Product  extends Base
         return $this->adapter->fetchAll($select);
     }
 
+    /**
+     * @param array $exportIds
+     * @return $this
+     */
+    public function setExportIds(array $exportIds = [])
+    {
+        $this->exportIds = $exportIds;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getExportIds() : array
+    {
+        return $this->exportIds;
+    }
+
+    /**
+     * @param bool $isDelta
+     * @return $this
+     */
+    public function isDelta(bool $isDelta) : self
+    {
+        $this->isDelta = $isDelta;
+        return $this;
+    }
 
 }

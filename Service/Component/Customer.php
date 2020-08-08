@@ -48,7 +48,7 @@ class Customer extends Base
             return;
         }
 
-        $this->getLogger()->info("Boxalino Exporter: CUSTOMER EXPORT for account: $this->account");
+        $this->getLogger()->info("Boxalino Exporter: CUSTOMERS EXPORT for account: $this->account");
         $count = CustomerExporterInterface::PAGINATION;
         $page = 1;
         $header = true;
@@ -73,7 +73,7 @@ class Customer extends Base
 
             $customers_to_save = [];
             $customers = $this->exporterResource->getAddressByFieldsAndLimit(CustomerExporterInterface::PAGINATION, $page, $fieldsForCustomerSelect);
-            $customerAttributesValues = $this->exporterResource->getUnionAttributesByAttributesAndIds($attrsFromDb, array_keys($customers));
+            $customerAttributesValues = $this->exporterResource->getUnionAttributesByAttributesAndIds($attrsFromDb, array_column($customers, 'entity_id'));
             if(!empty($customerAttributesValues))
             {
                 $this->getLogger()->info("Boxalino Exporter: Customers - retrieve data for side queries page $page for account: $this->account");

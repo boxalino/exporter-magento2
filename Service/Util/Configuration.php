@@ -36,7 +36,7 @@ class Configuration
     /**
      * @throws \Exception
      */
-    public function initialize() : array
+    public function initialize() : void
     {
         $this->indexConfig = [];
         $websites = $this->storeManager->getWebsites();
@@ -47,12 +47,9 @@ class Configuration
                 foreach ($group->getStores() as $store)
                 {
                     $enabled = $store->getConfig('boxalino_exporter/general/enabled');
-                    if(!$enabled)
-                    {
-                        return $this->indexConfig;
-                    }
+                    if(!$enabled){ return; }
 
-                    $account = $store->getConfig('boxalino_exporter/general/account_name');
+                    $account = $store->getConfig('boxalino_exporter/general/account');
                     if($account == "")
                     {
                         throw new \Exception(
@@ -76,16 +73,20 @@ class Configuration
                         );
                     }
 
-                    $this->indexConfig[$account][$language] = array(
+                    $this->indexConfig[$account][$language] = [
                         'website' => $website,
                         'group'   => $group,
                         'store'   => $store,
-                    );
+                    ];
                 }
             }
         }
     }
 
+    /**
+     * @param string $account
+     * @return $this
+     */
     public function setAccount(string $account)
     {
         $this->account = $account;
@@ -276,7 +277,6 @@ class Configuration
     {
         return (bool) $this->getFirstAccountStore()->getConfig('boxalino_exporter/general/dev');
     }
-
 
     /**
      * @return bool

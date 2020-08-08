@@ -23,7 +23,7 @@ interface TransactionExporterResourceInterface extends BaseExporterResourceInter
      * @param int $mode
      * @return mixed
      */
-    public function prepareSelectByShippingBillingModeSql(string $account, array $billingColumns =[], array $shippingColumns = [], int $mode = 1) : array;
+    public function prepareSelectByShippingBillingModeSql(string $account, array $billingColumns =[], array $shippingColumns = [], int $mode = 1) : Select;
 
     /**
      * @param $limit

@@ -30,16 +30,6 @@ class Base implements BaseExporterResourceInterface
     protected $deploymentConfig;
 
     /**
-     * @var []
-     */
-    protected $exportIds = [];
-
-    /**
-     * @var bool
-     */
-    protected $isDelta = false;
-
-    /**
      * Exporter constructor.
      *
      * @param LoggerInterface $logger
@@ -110,23 +100,6 @@ class Base implements BaseExporterResourceInterface
             ->from($table, ['*']);
 
         return $this->adapter->fetchAll($select);
-    }
-
-    public function setExportIds(array $exportIds = []) : self
-    {
-        $this->exportIds = $exportIds;
-        return $this;
-    }
-
-    public function getExportIds() : array
-    {
-        return $this->exportIds;
-    }
-
-    public function isDelta(bool $isDelta) : self
-    {
-        $this->isDelta = $isDelta;
-        return $this;
     }
 
 }

@@ -101,11 +101,10 @@ interface ProductExporterResourceInterface extends BaseExporterResourceInterface
 
     /**
      * @param int $storeId
-     * @param string $attrId
      * @param array $duplicateIds
      * @return array
      */
-    public function getParentTitleInformationByStoreAttrDuplicateIds(int $storeId, string $attrId, array $duplicateIds = []) : array;
+    public function getParentTitleInformationByStoreAndDuplicateIds(int $storeId, array $duplicateIds = []) : array;
 
     /**
      * @param array $duplicateIds
@@ -145,4 +144,20 @@ interface ProductExporterResourceInterface extends BaseExporterResourceInterface
      */
     public function getAttributeOptionValuesByStoreAndKey(int $storeId, string $key) : array;
 
+    /**
+     * @param bool $delta
+     * @return mixed
+     */
+    public function isDelta(bool $delta);
+
+    /**
+     * @param array $ids
+     * @return mixed
+     */
+    public function setExportIds(array $ids);
+
+    /**
+     * @return array
+     */
+    public function getExportIds() : array;
 }

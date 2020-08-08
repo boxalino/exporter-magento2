@@ -14,12 +14,6 @@ class Transaction extends Base
     implements TransactionExporterResourceInterface
 {
 
-
-    public function getAttributes() : array
-    {
-        return $this->getColumnsByTableName('sales_order_address');
-    }
-
     /**
      * We use the crypt key as salt when generating the guest user hash
      * this way we can still optimize on those users behaviour, whitout
@@ -32,7 +26,7 @@ class Transaction extends Base
      * @param int $mode
      * @return mixed
      */
-    public function prepareSelectByShippingBillingModeSql(string $account, array $billingColumns =[], array $shippingColumns = [], int $mode = 1) : array
+    public function prepareSelectByShippingBillingModeSql(string $account, array $billingColumns =[], array $shippingColumns = [], int $mode = 1) : Select
     {
         $salt = $this->adapter->quote(
             ((string) $this->deploymentConfig->get(ConfigOptionsListConstants::CONFIG_PATH_CRYPT_KEY)) .
@@ -116,6 +110,15 @@ class Transaction extends Base
         }
 
         return $select;
+    }
+
+    /**
+     * @return array
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function getAttributes() : array
+    {
+        return $this->getColumnsByTableName('sales_order_address');
     }
 
     /**

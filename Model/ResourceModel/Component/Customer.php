@@ -67,12 +67,11 @@ class Customer extends Base
                 $this->adapter->getTableName('customer_entity'),
                 $attributeGroups
             )
-            ->join(
+            ->joinLeft(
                 $this->adapter->getTableName('customer_address_entity'),
                 'customer_entity.entity_id = customer_address_entity.parent_id',
                 ['country_id', 'postcode']
             )
-            ->group('customer_entity.entity_id')
             ->limit($limit, ($page - 1) * $limit);
 
         return $this->adapter->fetchAll($select);
@@ -92,7 +91,8 @@ class Customer extends Base
         $selects = [];
         foreach($attributeTypes as $type)
         {
-            if (count($attributes[$type]) > 0) {
+            if (count($attributes[$type]) > 0)
+            {
                 $selects[] = $this->getSqlForAttributesUnion(
                     $this->adapter->getTableName('customer_entity_'. $type),
                     $columns, $attributes[$type], $ids
@@ -109,6 +109,8 @@ class Customer extends Base
 
             return $this->adapter->fetchAll($select);
         }
+
+        return [];
     }
 
     /**

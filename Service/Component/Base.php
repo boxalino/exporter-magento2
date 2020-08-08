@@ -28,6 +28,11 @@ class Base
     protected $success = true;
 
     /**
+     * @var string
+     */
+    protected $componentSourceKey;
+
+    /**
      * Base constructor.
      * @param LoggerInterface $logger
      */
@@ -150,6 +155,25 @@ class Base
     public function isSuccess() : bool
     {
         return $this->success;
+    }
+
+
+    /**
+     * @param string $sourceKey
+     * @return $this
+     */
+    public function setComponentSourceKey(string $sourceKey)
+    {
+        $this->componentSourceKey = $sourceKey;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getComponentSourceKey() : string
+    {
+        return $this->componentSourceKey;
     }
 
 }

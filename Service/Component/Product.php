@@ -9,13 +9,14 @@ use Magento\Store\Model\Store;
 use \Psr\Log\LoggerInterface;
 
 /**
- * Class Exporter
+ * Class Product
  *
  * @package Boxalino\Exporter\Model
  */
 class Product extends Base
     implements ProductExporterInterface
 {
+
     CONST EXPORTER_COMPONENT_TYPE = 'products';
 
     /**
@@ -33,6 +34,24 @@ class Product extends Base
      */
     protected $exporterResource;
 
+    /**
+     * @var array | null
+     */
+    protected $duplicateIds = null;
+
+    /**
+     * @var array
+     */
+    protected $languages = [];
+
+    /**
+     * Product constructor.
+     *
+     * @param LoggerInterface $logger
+     * @param BaseExporterResourceInterface $baseResource
+     * @param \Magento\Framework\App\ResourceConnection $rs
+     * @param ProductExporterResourceInterface $exporterResource
+     */
     public function __construct(
         LoggerInterface $logger,
         BaseExporterResourceInterface $baseResource,
@@ -45,31 +64,18 @@ class Product extends Base
     }
 
     /**
-     * @return array
+     * @TODO SRP
+     * @throws \Exception
      */
-    public function getAttributes() : array
-    {
-        $this->getLogger()->info('Boxalino Exporter: PRODUCT get all product attributes.');
-        $attributes = $this->exporterResource->getAttributes();
-
-        $this->getLogger()->info('Boxalino Exporter: get configured product attributes.');
-        $attributes = $this->getConfig()->getAccountProductsProperties($attributes, $this->getRequiredAttributes());
-        $this->getLogger()->info('Boxalino Exporter: returning configured product attributes: ' . implode(',', array_values($attributes)));
-
-        return $attributes;
-    }
-
     public function export() : void
     {
         $this->setContextOnResource();
-        $languages = $this->getConfig()->getAccountLanguages();
+        $this->setLanguages($this->getConfig()->getAccountLanguages());
         $this->getLogger()->info('Boxalino Exporter: PRODUCT - START of export for account ' . $this->account);
 
-        $attrs = $this->getAttributes();
-        $this->getLogger()->info('Boxalino Exporter: PRODUCT - get info about attributes - before for account ' . $this->account);
-
         $totalCount = 0; $page = 1; $header = true;
-        $duplicateIds = $this->getDuplicateIds($languages);
+        $attrs = $this->getAttributes();
+        $this->getDuplicateIds();
 
         while (true) {
             if ($totalCount >= ProductExporterInterface::LIMIT) {
@@ -83,7 +89,7 @@ class Product extends Base
                     if($r['group_id'] == null) $r['group_id'] = $r['entity_id'];
                     $data[] = $r;
                     $totalCount++;
-                    if(isset($duplicateIds[$r['entity_id']])){
+                    if(isset($this->duplicateIds[$r['entity_id']])){
                         $r['group_id'] = $r['entity_id'];
                         $r['entity_id'] = 'duplicate' . $r['entity_id'];
                         $data[] = $r;
@@ -111,9 +117,9 @@ class Product extends Base
             return;
         }
 
-        $attributeSourceKey = $this->getLibrary()->addMainCSVItemFile($this->getFiles()->getPath('products.csv'), 'entity_id');
-        $this->getLibrary()->addSourceStringField($attributeSourceKey, 'group_id', 'group_id');
-        $this->getLibrary()->addFieldParameter($attributeSourceKey, 'group_id', 'multiValued', 'false');
+        $this->setComponentSourceKey($this->getLibrary()->addMainCSVItemFile($this->getFiles()->getPath('products.csv'), 'entity_id'));
+        $this->getLibrary()->addSourceStringField($this->getComponentSourceKey(), 'group_id', 'group_id');
+        $this->getLibrary()->addFieldParameter($this->getComponentSourceKey(), 'group_id', 'multiValued', 'false');
 
         $productAttributes = $this->exporterResource->getAttributesByCodes($attrs);
         $this->getLogger()->info('Boxalino Exporter: PRODUCT - connected to DB, built attribute info query for account ' . $this->account);
@@ -132,8 +138,8 @@ class Product extends Base
             }
         }
 
-        $this->exportAttributes($languages, $attributeSourceKey, $duplicateIds, $attrsFromDb);
-        $this->exportInformation($duplicateIds, $languages);
+        $this->exportAttributes($attrsFromDb);
+        $this->exportInformation();
         $this->exportExtraTables();
 
         $this->setSuccess(true);
@@ -141,12 +147,9 @@ class Product extends Base
 
     /**
      * @param array $attrs
-     * @param array $languages
-     * @param string $mainSourceKey
-     * @param array $duplicateIds
      * @throws \Exception
      */
-    protected function exportAttributes(array $languages,  string $mainSourceKey, array $duplicateIds, array $attrs = []) : void
+    protected function exportAttributes(array $attrs = []) : void
     {
         $this->getLogger()->info('Boxalino Exporter: PRODUCT - exportProductAttributes for account ' . $this->account);
         $paramPriceLabel = '';
@@ -174,7 +177,7 @@ class Product extends Base
                 $headerLangRow = [];
                 $optionValues = [];
 
-                foreach ($languages as $langIndex => $lang)
+                foreach ($this->getLanguages() as $langIndex => $lang)
                 {
                     $select = $db->select()->from(
                         array('t_d' => $this->rs->getTableName('catalog_product_entity_' . $attrKey)),
@@ -264,7 +267,7 @@ class Product extends Base
                                 {
                                     if($row['store_id'] > 0){
                                         $data[$row['entity_id']]['value_' . $lang] = $row['value'];
-                                        if(isset($duplicateIds[$row['entity_id']])){
+                                        if(isset($this->duplicateIds[$row['entity_id']])){
                                             $data['duplicate'.$row['entity_id']]['value_' . $lang] = $getValueForDuplicate ?
                                                 $this->exporterResource->getAttributeValue($row['entity_id'], $typeKey, $storeId) :
                                                 $row['value'];
@@ -276,14 +279,14 @@ class Product extends Base
                                                 $url = $imageBaseUrl . $row['value'];
                                             }
                                             $additionalData[$row['entity_id']]['value_' . $lang] = $url;
-                                            if(isset($duplicateIds[$row['entity_id']])){
+                                            if(isset($this->duplicateIds[$row['entity_id']])){
                                                 $additionalData['duplicate'.$row['entity_id']]['value_' . $lang] = $url;
                                             }
                                         }
                                     }
                                 } else {
                                     $data[$row['entity_id']]['value_' . $lang] = $row['value'];
-                                    if(isset($duplicateIds[$row['entity_id']])){
+                                    if(isset($this->duplicateIds[$row['entity_id']])){
                                         $data['duplicate'.$row['entity_id']]['value_' . $lang] = $getValueForDuplicate ?
                                             $this->exporterResource->getAttributeValue($row['entity_id'], $typeKey, $storeId) :
                                             $row['value'];
@@ -296,7 +299,7 @@ class Product extends Base
                                             $url = $imageBaseUrl . $row['value'];
                                         }
                                         $additionalData[$row['entity_id']]['value_' . $lang] = $url;
-                                        if(isset($duplicateIds[$row['entity_id']])){
+                                        if(isset($this->duplicateIds[$row['entity_id']])){
                                             $additionalData['duplicate'.$row['entity_id']]['value_' . $lang] = $url;
                                         }
                                     }
@@ -310,7 +313,7 @@ class Product extends Base
                                         $additionalData[$row['entity_id']] = array('entity_id' => $row['entity_id'],
                                             'store_id' => $row['store_id'],
                                             'value_' . $lang => $url);
-                                        if(isset($duplicateIds[$row['entity_id']])){
+                                        if(isset($this->duplicateIds[$row['entity_id']])){
                                             $additionalData['duplicate'.$row['entity_id']] = array(
                                                 'entity_id' => 'duplicate'.$row['entity_id'],
                                                 'value_' . $lang => $url);
@@ -323,7 +326,7 @@ class Product extends Base
                                         $url = $imageBaseUrl . $row['value'];
                                         $additionalData[$row['entity_id']] = array('entity_id' => $row['entity_id'],
                                             'value_' . $lang => $url);
-                                        if(isset($duplicateIds[$row['entity_id']])){
+                                        if(isset($this->duplicateIds[$row['entity_id']])){
                                             $additionalData['duplicate'.$row['entity_id']] = array(
                                                 'entity_id' => 'duplicate'.$row['entity_id'],
                                                 'value_' . $lang => $url);
@@ -337,7 +340,7 @@ class Product extends Base
                                         foreach($values as $v){
                                             $data[] = array('entity_id' => $row['entity_id'],
                                                 $type['attribute_code'] . '_id' => $v);
-                                            if(isset($duplicateIds[$row['entity_id']])){
+                                            if(isset($this->duplicateIds[$row['entity_id']])){
                                                 $data[] = array('entity_id' => 'duplicate'.$row['entity_id'],
                                                     $type['attribute_code'] . '_id' => $v);
                                             }
@@ -346,7 +349,7 @@ class Product extends Base
                                         if(!isset($data[$row['entity_id']])) {
                                             $data[$row['entity_id']] = array('entity_id' => $row['entity_id'],
                                                 'store_id' => $row['store_id'],'value_' . $lang => $row['value']);
-                                            if(isset($duplicateIds[$row['entity_id']])){
+                                            if(isset($this->duplicateIds[$row['entity_id']])){
                                                 $data['duplicate'.$row['entity_id']] = array(
                                                     'entity_id' => 'duplicate'.$row['entity_id'],
                                                     'store_id' => $row['store_id'],
@@ -365,7 +368,7 @@ class Product extends Base
                                             if(!isset($data[$row['entity_id'].$v])){
                                                 $data[$row['entity_id'].$v] = array('entity_id' => $row['entity_id'],
                                                     $type['attribute_code'] . '_id' => $v);
-                                                if(isset($duplicateIds[$row['entity_id']])){
+                                                if(isset($this->duplicateIds[$row['entity_id']])){
                                                     $data[] = array('entity_id' => 'duplicate'.$row['entity_id'],
                                                         $type['attribute_code'] . '_id' => $v);
                                                 }
@@ -379,7 +382,7 @@ class Product extends Base
                                         $data[$row['entity_id']] = array('entity_id' => $row['entity_id'],
                                             'store_id' => $row['store_id'],
                                             $valueLabel => $row['value']);
-                                        if(isset($duplicateIds[$row['entity_id']])){
+                                        if(isset($this->duplicateIds[$row['entity_id']])){
                                             $data['duplicate'.$row['entity_id']] = array(
                                                 'entity_id' => 'duplicate'.$row['entity_id'],
                                                 'store_id' => $row['store_id'],
@@ -484,13 +487,13 @@ class Product extends Base
                         case 'special_from_date':
                         case 'special_to_date':
                             $lc = [];
-                            foreach ($languages as $lcl) {
+                            foreach ($this->getLanguages() as $lcl) {
                                 $lc[$lcl] = 'value_' . $lcl;
                             }
                             $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey, $fieldId, $lc);
                             break;
                         case 'price':
-                            $this->getLibrary()->addSourceListPriceField($mainSourceKey, 'entity_id');
+                            $this->getLibrary()->addSourceListPriceField($this->getComponentSourceKey(), 'entity_id');
                             $paramPriceLabel = 'value';
 
                             if(!$global)
@@ -501,13 +504,13 @@ class Product extends Base
                                 $this->getLibrary()->addSourceStringField($attributeSourceKey, "price_localized", $paramPriceLabel);
                             }
 
-                            $this->getLibrary()->addFieldParameter($mainSourceKey,'bx_listprice', 'pc_fields', 'CASE WHEN (price.'.$paramPriceLabel.' IS NULL OR price.'.$paramPriceLabel.' <= 0) AND ref.value IS NOT NULL then ref.value ELSE price.'.$paramPriceLabel.' END as price_value');
-                            $this->getLibrary()->addFieldParameter($mainSourceKey,'bx_listprice', 'pc_tables', 'LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_product_price` as price ON t.entity_id = price.entity_id, LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_resource_price` as ref ON t.entity_id = ref.parent_id');
+                            $this->getLibrary()->addFieldParameter($this->getComponentSourceKey(),'bx_listprice', 'pc_fields', 'CASE WHEN (price.'.$paramPriceLabel.' IS NULL OR price.'.$paramPriceLabel.' <= 0) AND ref.value IS NOT NULL then ref.value ELSE price.'.$paramPriceLabel.' END as price_value');
+                            $this->getLibrary()->addFieldParameter($this->getComponentSourceKey(),'bx_listprice', 'pc_tables', 'LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_product_price` as price ON t.entity_id = price.entity_id, LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_resource_price` as ref ON t.entity_id = ref.parent_id');
                             $this->getLibrary()->addResourceFile($this->getFiles()->getPath($type['attribute_code'] . '.csv'), 'parent_id', "value");
 
                             break;
                         case 'special_price':
-                            $this->getLibrary()->addSourceDiscountedPriceField($mainSourceKey, 'entity_id');
+                            $this->getLibrary()->addSourceDiscountedPriceField($this->getComponentSourceKey(), 'entity_id');
                             $paramSpecialPriceLabel = "value";
 
                             if(!$global)
@@ -518,8 +521,8 @@ class Product extends Base
                                 $this->getLibrary()->addSourceStringField($attributeSourceKey, "special_price_localized", $paramSpecialPriceLabel);
                             }
 
-                            $this->getLibrary()->addFieldParameter($mainSourceKey,'bx_discountedprice', 'pc_fields', 'CASE WHEN (price.'.$paramSpecialPriceLabel.' IS NULL OR price.'.$paramSpecialPriceLabel.' <= 0) AND ref.value IS NOT NULL then ref.value ELSE price.'.$paramSpecialPriceLabel.' END as price_value');
-                            $this->getLibrary()->addFieldParameter($mainSourceKey,'bx_discountedprice', 'pc_tables', 'LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_product_special_price` as price ON t.entity_id = price.entity_id, LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_resource_special_price` as ref ON t.entity_id = ref.parent_id');
+                            $this->getLibrary()->addFieldParameter($this->getComponentSourceKey(),'bx_discountedprice', 'pc_fields', 'CASE WHEN (price.'.$paramSpecialPriceLabel.' IS NULL OR price.'.$paramSpecialPriceLabel.' <= 0) AND ref.value IS NOT NULL then ref.value ELSE price.'.$paramSpecialPriceLabel.' END as price_value');
+                            $this->getLibrary()->addFieldParameter($this->getComponentSourceKey(),'bx_discountedprice', 'pc_tables', 'LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_product_special_price` as price ON t.entity_id = price.entity_id, LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_resource_special_price` as ref ON t.entity_id = ref.parent_id');
                             $this->getLibrary()->addResourceFile($this->getFiles()->getPath($type['attribute_code'] . '.csv'), 'parent_id', "value");
 
                             break;
@@ -545,170 +548,123 @@ class Product extends Base
 
         }
 
-        $this->getLibrary()->addSourceNumberField($mainSourceKey, 'bx_grouped_price', 'entity_id');
-        $this->getLibrary()->addFieldParameter($mainSourceKey,'bx_grouped_price', 'pc_fields', 'CASE WHEN sref.value IS NOT NULL AND sref.value > 0 AND (ref.value IS NULL OR sref.value < ref.value) THEN sref.value WHEN ref.value IS NOT NULL then ref.value WHEN sprice.'.$paramSpecialPriceLabel.' IS NOT NULL AND sprice.'.$paramSpecialPriceLabel.' > 0 AND price.'.$paramPriceLabel.' > sprice.'.$paramSpecialPriceLabel.' THEN sprice.'.$paramSpecialPriceLabel.' ELSE price.'.$paramPriceLabel.' END as price_value');
-        $this->getLibrary()->addFieldParameter($mainSourceKey,'bx_grouped_price', 'pc_tables', 'LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_product_price` as price ON t.entity_id = price.entity_id, LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_resource_price` as ref ON t.group_id = ref.parent_id, LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_product_special_price` as sprice ON t.entity_id = sprice.entity_id, LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_resource_special_price` as sref ON t.group_id = sref.parent_id');
-        $this->getLibrary()->addFieldParameter($mainSourceKey,'bx_grouped_price', 'multiValued', 'false');
+        $this->getLibrary()->addSourceNumberField($this->getComponentSourceKey(), 'bx_grouped_price', 'entity_id');
+        $this->getLibrary()->addFieldParameter($this->getComponentSourceKey(),'bx_grouped_price', 'pc_fields', 'CASE WHEN sref.value IS NOT NULL AND sref.value > 0 AND (ref.value IS NULL OR sref.value < ref.value) THEN sref.value WHEN ref.value IS NOT NULL then ref.value WHEN sprice.'.$paramSpecialPriceLabel.' IS NOT NULL AND sprice.'.$paramSpecialPriceLabel.' > 0 AND price.'.$paramPriceLabel.' > sprice.'.$paramSpecialPriceLabel.' THEN sprice.'.$paramSpecialPriceLabel.' ELSE price.'.$paramPriceLabel.' END as price_value');
+        $this->getLibrary()->addFieldParameter($this->getComponentSourceKey(),'bx_grouped_price', 'pc_tables', 'LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_product_price` as price ON t.entity_id = price.entity_id, LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_resource_price` as ref ON t.group_id = ref.parent_id, LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_product_special_price` as sprice ON t.entity_id = sprice.entity_id, LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_resource_special_price` as sref ON t.group_id = sref.parent_id');
+        $this->getLibrary()->addFieldParameter($this->getComponentSourceKey(),'bx_grouped_price', 'multiValued', 'false');
 
         $this->getFiles()->clearEmptyFiles("product_");
     }
 
     /**
-     * @param array $duplicateIds
-     * @param array $languages
      * @throws \Exception
      */
-    protected function exportInformation(array $duplicateIds, array $languages)
+    protected function exportInformation()
     {
-        $this->getLogger()->info('Boxalino Exporter: PRODUCT - exportProductInformation for account ' . $this->account);
+        $this->getLogger()->info('Boxalino Exporter: PRODUCT INFORMATION START for account ' . $this->account);
+        $this->exportStockInformation();
+        $this->exportWebsiteInformation();
+        $this->exportParentCategoriesInformation();
+        $this->exportSuperLinkInformation();
+        $this->exportLinkInformation();
+        $this->exportParentTitleInformation();
+        $this->exportCategoriesInformation();
+        $this->getLogger()->info("Boxalino Exporter: PRODUCT INFORMATION FINISHED");
+    }
 
-        $productStockData = $this->exporterResource->getStockInformation();
-        if(sizeof($productStockData))
+    protected function exportStockInformation() : void
+    {
+        $information = $this->exporterResource->getStockInformation();
+        $data = [];
+        if(sizeof($information))
         {
-            foreach ($productStockData as $r)
+            foreach ($information as $r)
             {
                 $data[] = array('entity_id'=>$r['entity_id'], 'qty'=>$r['qty']);
-                if(isset($duplicateIds[$r['entity_id']])){
+                if(isset($this->duplicateIds[$r['entity_id']])){
                     $data[] = array('entity_id'=>'duplicate'.$r['entity_id'], 'qty'=>$r['qty']);
                 }
             }
             $d = array_merge(array(array_keys(end($data))), $data);
             $this->getFiles()->savePartToCsv('product_stock.csv', $d);
-            $data = null; $d = null;$productStockData = null;
+
             $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_stock.csv'), 'entity_id');
             $this->getLibrary()->addSourceNumberField($attributeSourceKey, 'qty', 'qty');
         }
+    }
 
-        //product website
-        $productWebsiteInformation = $this->exporterResource->getWebsiteInformation();
-        if(sizeof($productWebsiteInformation))
+    protected function exportWebsiteInformation() : void
+    {
+        $information = $this->exporterResource->getWebsiteInformation();
+        if(sizeof($information))
         {
-            foreach ($productWebsiteInformation as $r) {
-                $data[] = $r;
-                if(isset($duplicateIds[$r['entity_id']])){
-                    $r['entity_id'] = 'duplicate'.$r['entity_id'];
-                    $data[] = $r;
-                }
-            }
+            $data = $this->duplicate($information);
             $d = array_merge(array(array_keys(end($data))), $data);
             $this->getFiles()->savePartToCsv('product_website.csv', $d);
-            $data = null; $d = null; $productWebsiteInformation = null;
+
             $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_website.csv'), 'entity_id');
             $this->getLibrary()->addSourceStringField($attributeSourceKey, 'website_name', 'name');
             $this->getLibrary()->addSourceStringField($attributeSourceKey, 'website_id', 'website_id');
         }
+    }
 
-        //product parent categories -- !always added!
+    protected function exportParentCategoriesInformation() : void
+    {
         $productParentCategory = $this->exporterResource->getParentCategoriesInformation();
-        $duplicateResult = $this->exporterResource->getParentCategoriesInformationByDuplicateIds($duplicateIds);
+        $duplicateResult = $this->exporterResource->getParentCategoriesInformationByDuplicateIds($this->duplicateIds);
         foreach ($duplicateResult as $r)
         {
             $r['entity_id'] = 'duplicate'.$r['entity_id'];
             $productParentCategory[] = $r;
         }
-        $duplicateResult = null;
         if (empty($productParentCategory))
         {
             $d = [['entity_id', 'category_id']];
         } else {
             $d = array_merge(array(array_keys(end($productParentCategory))), $productParentCategory);
         }
+
         $this->getFiles()->savePartToCsv('product_categories.csv', $d);
-        $d = null;$productParentCategory = null;
+    }
 
-        //product super link
-        $superLink = $this->exporterResource->getSuperLinkInformation();
-        if(sizeof($superLink))
+    protected function exportSuperLinkInformation() : void
+    {
+        $information = $this->exporterResource->getSuperLinkInformation();
+        if(sizeof($information))
         {
-            foreach ($superLink as $r)
-            {
-                $data[] = $r;
-                if(isset($duplicateIds[$r['entity_id']]))
-                {
-                    $r['entity_id'] = 'duplicate'.$r['entity_id'];
-                    $data[] = $r;
-                }
-            }
-
+            $data = $this->duplicate($information);
             $d = array_merge(array(array_keys(end($data))), $data);
             $this->getFiles()->savePartToCsv('product_parent.csv', $d);
-            $data = null;$d = null;$superLink=null;
+
             $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_parent.csv'), 'entity_id');
             $this->getLibrary()->addSourceStringField($attributeSourceKey, 'parent_id', 'parent_id');
             $this->getLibrary()->addSourceStringField($attributeSourceKey, 'link_id', 'link_id');
         }
+    }
 
-        //product link
-        $linkData = $this->exporterResource->getLinksInformation();
-        if(sizeof($linkData))
+    protected function exportLinkInformation() : void
+    {
+        $information = $this->exporterResource->getLinksInformation();
+        if(sizeof($information))
         {
-            foreach ($linkData as $r)
-            {
-                $data[] = $r;
-                if(isset($duplicateIds[$r['entity_id']])){
-                    $r['entity_id'] = 'duplicate'.$r['entity_id'];
-                    $data[] = $r;
-                }
-            }
+            $data = $this->duplicate($information);
             $d = array_merge(array(array_keys(end($data))), $data);
             $this->getFiles()->savePartToCsv('product_links.csv', $d);
-            $data = null;$linkData=null;$d = null;
+
             $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_links.csv'), 'entity_id');
             $this->getLibrary()->addSourceStringField($attributeSourceKey, 'code', 'code');
             $this->getLibrary()->addSourceStringField($attributeSourceKey, 'linked_product_id', 'linked_product_id');
         }
+    }
 
-        $this->getLogger()->info("Boxalino Exporter: PRODUCT exportProductInformation finished");
-
-        //product parent title
-        $fetchedResult = [];
-        $db = $this->rs->getConnection();
-        $attrId = $this->exporterResource->getAttributeIdByAttributeCodeAndEntityType('name', \Magento\Catalog\Setup\CategorySetup::CATALOG_PRODUCT_ENTITY_TYPE_ID);
-        $lvh = [];
-        foreach ($languages as $language)
+    protected function exportParentTitleInformation() : void
+    {
+        foreach ($this->getLanguages() as $language)
         {
-            $lvh[$language] = 'value_' . $language;
             $store = $this->getConfig()->getStore($language);
-            $storeId = $store->getId();
-            $store = null;
+            $storeId = $store->getId(); $store = null;
 
-            $select1 = $db->select()
-                ->from(
-                    array('c_p_e' => $this->rs->getTableName('catalog_product_entity')),
-                    array('entity_id')
-                )
-                ->joinLeft(
-                    array('c_p_r' => $this->rs->getTableName('catalog_product_relation')),
-                    'c_p_e.entity_id = c_p_r.child_id',
-                    array('parent_id')
-                );
-
-            $select1->where('t_d.attribute_id = ?', $attrId)->where('t_d.store_id = 0 OR t_d.store_id = ?',$storeId);
-            if($this->isDelta()) $select1->where('c_p_e.entity_id IN(?)', $this->getDeltaIds());
-
-            $select2 = clone $select1;
-            $select2->join(
-                array('t_d' => $this->rs->getTableName('catalog_product_entity_varchar')),
-                't_d.entity_id = c_p_e.entity_id AND c_p_r.parent_id IS NULL',
-                array(
-                    new \Zend_Db_Expr('LOWER(t_d.value) as value'),
-                    't_d.store_id'
-                )
-            );
-            $select1->join(
-                array('t_d' => $this->rs->getTableName('catalog_product_entity_varchar')),
-                't_d.entity_id = c_p_r.parent_id',
-                array(
-                    new \Zend_Db_Expr('LOWER(t_d.value) as value'),
-                    't_d.store_id'
-                )
-            );
-            $select = $db->select()->union(
-                array($select1, $select2),
-                \Zend_Db_Select::SQL_UNION
-            );
-            $fetchedResult = $db->fetchAll($select);
-
+            $fetchedResult = $this->exporterResource->getParentTitleInformationByStore($storeId);
             if (sizeof($fetchedResult))
             {
                 foreach ($fetchedResult as $r)
@@ -727,75 +683,53 @@ class Product extends Base
                     }
                     $data[$r['entity_id']] = array('entity_id' => $r['entity_id'], 'value_' . $language => $r['value']);
                 }
-
                 $fetchedResult = null;
-                $select = $db->select()
-                    ->from(
-                        array('c_p_e' => $this->rs->getTableName('catalog_product_entity')),
-                        array('entity_id', new \Zend_Db_Expr("CASE WHEN c_p_e_v_b.value IS NULL THEN LOWER(c_p_e_v_a.value) ELSE LOWER(c_p_e_v_b.value) END as value"))
-                    )->joinLeft(
-                        array('c_p_e_v_a' => $this->rs->getTableName('catalog_product_entity_varchar')),
-                        '(c_p_e_v_a.attribute_id = ' . $attrId . ' AND c_p_e_v_a.store_id = 0) AND (c_p_e_v_a.entity_id = c_p_e.entity_id)',
-                        array()
-                    )->joinLeft(
-                        array('c_p_e_v_b' => $this->rs->getTableName('catalog_product_entity_varchar')),
-                        '(c_p_e_v_b.attribute_id = ' . $attrId . ' AND c_p_e_v_b.store_id = ' . $storeId . ') AND (c_p_e_v_b.entity_id = c_p_e.entity_id)',
-                        array()
-                    )->where('c_p_e.entity_id IN (?)', $duplicateIds);
 
-                $duplicateResult = $db->fetchAll($select);
-                foreach ($duplicateResult as $r){
+                $duplicateResult = $this->exporterResource->getParentTitleInformationByStoreAndDuplicateIds($storeId, $this->duplicateIds);
+                foreach ($duplicateResult as $r)
+                {
                     $r['entity_id'] = 'duplicate'.$r['entity_id'];
-                    if (isset($data[$r['entity_id']])) {
+                    if (isset($data[$r['entity_id']]))
+                    {
                         $data[$r['entity_id']]['value_' . $language] = $r['value'];
                         continue;
                     }
                     $data[$r['entity_id']] = array('entity_id' => $r['entity_id'], 'value_' . $language => $r['value']);
                 }
                 $duplicateResult = null;
-
             }
         }
         $data = array_merge(array(array_keys(end($data))), $data);
         $this->getFiles()->savePartToCsv('product_bx_parent_title.csv', $data);
+
         $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_bx_parent_title.csv'), 'entity_id');
-        $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey, 'bx_parent_title', $lvh);
+        $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey, 'bx_parent_title', $this->getLanguageHeaders());
         $this->getLibrary()->addFieldParameter($attributeSourceKey,'bx_parent_title', 'multiValued', 'false');
     }
 
     /**
-     * @param $categories
-     */
-    protected function addCategoriesData($categories) : void
-    {
-        $languages = $this->getConfig()->getAccountLanguages();
-        $categories = array_merge(array(array_keys(end($categories))), $categories);
-        $this->getFiles()->savePartToCsv('categories.csv', $categories);
-        $labelColumns = [];
-        foreach ($languages as $lang) {
-            $labelColumns[$lang] = 'value_' . $lang;
-        }
-        $this->getLibrary()->addCategoryFile($this->getFiles()->getPath('categories.csv'), 'category_id', 'parent_id', $labelColumns);
-        $productToCategoriesSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_categories.csv'), 'entity_id');
-        $this->getLibrary()->setCategoryField($productToCategoriesSourceKey, 'category_id');
-    }
-
-    /**
-     * exporting categories
      * @throws \Exception
      */
-    public function exportCategories() : void
+    public function exportCategoriesInformation() : void
     {
-        $this->getLogger()->info('Boxalino Exporter: CATEGORIES - Preparing category data for each language of the account: ' . $this->account);
+        $this->getLogger()->info("Boxalino Exporter: CATEGORIES prepare export for each language of the account: $this->account");
         $categories = [];
-        foreach ($this->getConfig()->getAccountLanguages() as $language) {
+        foreach ($this->getLanguages() as $language)
+        {
             $store = $this->getConfig()->getStore($language);
-            $this->getLogger()->info('Boxalino Exporter: CATEGORIES - Start exportCategories for language . ' . $language . ' on store:' . $store->getId());
+            $this->getLogger()->info("Boxalino Exporter: CATEGORIES START exportCategories for LANGUAGE $language on store:" . $store->getId());
             $categories = $this->exportCategoriesByStoreLanguage($store, $language, $categories);
         }
-        $this->addCategoriesData($categories);
-        $this->getLogger()->info('Boxalino Exporter: CATEGORIES exported.');
+        $categories = array_merge(array(array_keys(end($categories))), $categories);
+        $this->getFiles()->savePartToCsv('categories.csv', $categories);
+
+        $this->getLibrary()->addCategoryFile($this->getFiles()->getPath('categories.csv'), 'category_id', 'parent_id', $this->getLanguageHeaders());
+        $productToCategoriesSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_categories.csv'), 'entity_id');
+        $this->getLibrary()->setCategoryField($productToCategoriesSourceKey, 'category_id');
+
+        $this->getLogger()->info("Boxalino Exporter: CATEGORIES END.");
     }
+
     /**
      * @param Store $store
      * @param string $language
@@ -806,7 +740,8 @@ class Product extends Base
     protected function exportCategoriesByStoreLanguage(Store $store, string $language, array $transformedCategories) : array
     {
         $categories = $this->exporterResource->getCategoriesByStoreId($store->getId());
-        foreach($categories as $r){
+        foreach($categories as $r)
+        {
             if (!$r['parent_id'])  {
                 continue;
             }
@@ -822,24 +757,58 @@ class Product extends Base
     }
 
     /**
-     * @param array $languages
+     * @return array
+     */
+    public function getAttributes() : array
+    {
+        $this->getLogger()->info('Boxalino Exporter: PRODUCT get all product attributes.');
+        $attributes = $this->exporterResource->getAttributes();
+
+        $this->getLogger()->info('Boxalino Exporter: PRODUCT get configured product attributes.');
+        $attributes = $this->getConfig()->getAccountProductsProperties($attributes, $this->getRequiredAttributes());
+        $this->getLogger()->info('Boxalino Exporter: PRODUCT ATTRIBUTES: ' . implode(',', array_values($attributes)));
+
+        return $attributes;
+    }
+
+    /**
      * @return array
      * @throws \Exception
      */
-    protected function getDuplicateIds(array $languages) : array
+    public function getDuplicateIds() : array
     {
-        $ids = [];
-        $attributeId = $this->exporterResource->getAttributeIdByAttributeCodeAndEntityType('visibility', \Magento\Catalog\Setup\CategorySetup::CATALOG_PRODUCT_ENTITY_TYPE_ID);
-        foreach ($languages as $language)
+        if(is_null($this->duplicateIds))
         {
-            $storeObject = $this->getConfig()->getStore($language);
-            $ids = $this->exporterResource->getDuplicateIds(
-                $storeObject->getId(), $attributeId, \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE
-            );
-
-            $storeObject = null;
+            $ids = [];
+            $attributeId = $this->exporterResource->getAttributeIdByAttributeCodeAndEntityType('visibility', \Magento\Catalog\Setup\CategorySetup::CATALOG_PRODUCT_ENTITY_TYPE_ID);
+            foreach ($this->getLanguages() as $language)
+            {
+                $storeObject = $this->getConfig()->getStore($language);
+                $ids = $this->exporterResource->getDuplicateIds(
+                    $storeObject->getId(), $attributeId, \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE
+                );
+                $storeObject = null;
+            }
+            $this->duplicateIds = $ids;
         }
-        return $ids;
+
+        return $this->duplicateIds;
+    }
+
+    public function duplicate(array $content) : array
+    {
+        $data = [];
+        foreach ($content as $r)
+        {
+            $data[] = $r;
+            if(isset($this->duplicateIds[$r['entity_id']]))
+            {
+                $r['entity_id'] = 'duplicate'.$r['entity_id'];
+                $data[] = $r;
+            }
+        }
+
+        return $data;
     }
 
     /**
@@ -877,6 +846,36 @@ class Product extends Base
             'visibility',
             'status'
         ];
+    }
+
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public function getLanguageHeaders() : array
+    {
+        $languages = $this->getLanguages();
+        $fields = preg_filter('/^/', 'value_', array_values($languages));
+
+        return array_combine($languages, $fields);
+    }
+
+    /**
+     * @param array $languages
+     * @return $this
+     */
+    public function setLanguages(array $languages)
+    {
+        $this->languages = $languages;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getLanguages() : array
+    {
+        return $this->languages;
     }
 
     /**

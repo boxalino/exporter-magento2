@@ -64,11 +64,18 @@ class Transaction extends Base
         $tempSelect = $this->exporterResource->prepareSelectByShippingBillingModeSql($this->account, $billingColumns, $shippingColumns, $this->getConfig()->getTransactionMode());
         while (true)
         {
-            $configurable = [];
             $transactions = $this->exporterResource->getByLimitPage(TransactionExporterInterface::PAGINATION, $page, $tempSelect);
-            if(sizeof($transactions) < 1 && $page == 1){ return;} elseif (sizeof($transactions) < 1 && $page > 1) { break; }
+            if(sizeof($transactions) < 1 && $page == 1)
+            {
+                $this->getLogger()->info("Boxalino Exporter: TRANSACTIONS EXPORT - NO TRANSACTIONS FOUND for account $this->account");
+                return;
+            } elseif (sizeof($transactions) < 1 && $page > 1)
+            {
+                break;
+            }
 
-            $this->getLogger()->info("Boxalino Exporter: TRANSACTIONS EXPORT - loaded page #$page for account $this->account");
+            $this->getLogger()->info("Boxalino Exporter: TRANSACTIONS EXPORT - loaded PAGE #$page for account $this->account");
+            $configurable = [];
             foreach ($transactions as $transaction)
             {
                 //is configurable
