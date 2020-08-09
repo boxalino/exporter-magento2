@@ -18,11 +18,6 @@ class Delta extends ProcessManager
     const SERVER_TIMEOUT_DEFAULT = 60;
 
     /**
-     * @var array
-     */
-    protected $ids = [];
-
-    /**
      * Stop execution if there are no deltas
      *
      * @return bool
@@ -39,16 +34,6 @@ class Delta extends ProcessManager
 
         $this->logger->info("Boxalino Exporter: The delta export has " . count($ids) . " products to update in stack.");
         return parent::run();
-    }
-
-    public function getType(): string
-    {
-        return \Boxalino\Exporter\Model\Indexer\Delta::INDEXER_TYPE;
-    }
-
-    public function getIndexerId(): string
-    {
-        return \Boxalino\Exporter\Model\Indexer\Delta::INDEXER_ID;
     }
 
     /**
@@ -119,17 +104,20 @@ class Delta extends ProcessManager
      */
     public function getIds() : array
     {
-        $lastUpdateDate = $this->getLatestRun();
-        $directProductUpdates = $this->processResource->getProductIdsByUpdatedAt($lastUpdateDate);
-        $categoryProductUpdates = $this->processResource->getAffectedEntityIds(\Boxalino\Exporter\Model\Indexer\Delta::INDEXER_ID);
-
-        $ids = array_filter(array_unique(array_merge($directProductUpdates, explode(",", $categoryProductUpdates))));
-        if(empty($ids))
+        if(is_null($this->ids))
         {
-            return [];
+            $lastUpdateDate = $this->getLatestRun();
+            $directProductUpdates = $this->processResource->getProductIdsByUpdatedAt($lastUpdateDate);
+            $categoryProductUpdates = $this->processResource->getAffectedEntityIds(\Boxalino\Exporter\Model\Indexer\Delta::INDEXER_ID);
+
+            $ids = array_filter(array_unique(array_merge($directProductUpdates, explode(",", $categoryProductUpdates))));
+            if(empty($ids))
+            {
+                $this->ids = [];
+            }
         }
 
-        return $ids;
+        return $this->ids;
     }
 
     /**
@@ -138,6 +126,22 @@ class Delta extends ProcessManager
     public function isDelta() : bool
     {
         return true;
+    }
+
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return \Boxalino\Exporter\Model\Indexer\Delta::INDEXER_TYPE;
+    }
+
+    /**
+     * @return string
+     */
+    public function getIndexerId(): string
+    {
+        return \Boxalino\Exporter\Model\Indexer\Delta::INDEXER_ID;
     }
 
     /**

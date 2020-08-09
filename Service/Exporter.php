@@ -198,7 +198,6 @@ class Exporter implements ExporterInterface
         }
     }
 
-
     /**
      * Exporting products and product elements (tags, manufacturers, category, prices, reviews, etc)
      */
@@ -252,7 +251,6 @@ class Exporter implements ExporterInterface
             ->setLibrary($this->customerExporter->getLibrary())
             ->export();
     }
-
 
     /**
      * Get timeout for exporter

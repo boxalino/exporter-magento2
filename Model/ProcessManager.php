@@ -56,6 +56,10 @@ abstract class ProcessManager
      */
     protected $timezone;
 
+    /**
+     * @var array | null
+     */
+    protected $ids = null;
 
     /**
      * ProcessManager constructor.
@@ -218,6 +222,16 @@ abstract class ProcessManager
         }
 
         return $this->timezone->convertConfigTimeToUtc($time);
+    }
+
+    /**
+     * @param array $ids
+     * @return $this
+     */
+    public function setIds(array $ids)
+    {
+        $this->ids = array_unique($ids) ?? [];
+        return $this;
     }
 
     abstract function getTimeout() : int;
