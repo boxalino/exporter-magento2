@@ -31,7 +31,7 @@
                 </field>
             </group>
 
-            <group id="scheduler" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+            <group id="scheduler" translate="label" type="text" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="0">
                 <label>Scheduler</label>
                 <!-- create text type field -->
                 <field id="status" translate="label" type="select" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
