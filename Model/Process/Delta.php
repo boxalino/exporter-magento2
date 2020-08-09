@@ -5,18 +5,12 @@ use Boxalino\Exporter\Model\ProcessManager;
 
 /**
  * Class Delta
+ * Delta exporter process handler
  *
- * @package Boxalino\Exporter\Model\Exporter\Process
+ * @package Boxalino\Exporter\Model\Process
  */
 class Delta extends ProcessManager
 {
-
-    /**
-     * Indexer ID in configuration
-     */
-    const INDEXER_ID = 'boxalino_exporter_delta';
-
-    const INDEXER_TYPE = 'delta';
 
     /**
      * Default server timeout
@@ -33,7 +27,7 @@ class Delta extends ProcessManager
      *
      * @return bool
      */
-    public function run()
+    public function run() : bool
     {
         $ids = $this->getIds();
         if(empty($ids))
@@ -49,19 +43,19 @@ class Delta extends ProcessManager
 
     public function getType(): string
     {
-        return self::INDEXER_TYPE;
+        return \Boxalino\Exporter\Model\Indexer\Delta::INDEXER_TYPE;
     }
 
     public function getIndexerId(): string
     {
-        return self::INDEXER_ID;
+        return \Boxalino\Exporter\Model\Indexer\Delta::INDEXER_ID;
     }
 
     /**
      * Get timeout for exporter
      * @return bool|int
      */
-    public function getTimeout($account)
+    public function getTimeout() : int
     {
         return self::SERVER_TIMEOUT_DEFAULT;
     }
@@ -75,7 +69,7 @@ class Delta extends ProcessManager
      * @param $account
      * @return bool
      */
-    public function exportDeniedOnAccount($account)
+    public function exportDeniedOnAccount($account) : bool
     {
         if(!$this->config->isExportSchedulerEnabled())
         {
@@ -105,7 +99,7 @@ class Delta extends ProcessManager
      *
      * @return false|string|null
      */
-    public function getLatestRun()
+    public function getLatestRun() : string
     {
         if(is_null($this->latestRun))
         {
@@ -123,11 +117,11 @@ class Delta extends ProcessManager
     /**
      * @return array
      */
-    public function getIds()
+    public function getIds() : array
     {
         $lastUpdateDate = $this->getLatestRun();
         $directProductUpdates = $this->processResource->getProductIdsByUpdatedAt($lastUpdateDate);
-        $categoryProductUpdates = $this->processResource->getAffectedEntityIds(self::INDEXER_ID);
+        $categoryProductUpdates = $this->processResource->getAffectedEntityIds(\Boxalino\Exporter\Model\Indexer\Delta::INDEXER_ID);
 
         $ids = array_filter(array_unique(array_merge($directProductUpdates, explode(",", $categoryProductUpdates))));
         if(empty($ids))
@@ -147,7 +141,7 @@ class Delta extends ProcessManager
     }
 
     /**
-     * resetting the affected products in case of a succesfull execution of delta export
+     * Resetting the affected products in case of a succesfull execution of delta export
      */
     public function updateAffectedProductIds() : void
     {

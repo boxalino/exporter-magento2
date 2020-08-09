@@ -5,6 +5,7 @@ use Boxalino\Exporter\Model\Process\Full as ProcessManager;
 
 /**
  * Class Full
+ * Full data exporter - exports to DI the products, customers, transactions as configured
  *
  * @package Boxalino\Exporter\Model\Indexer
  */

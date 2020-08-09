@@ -46,8 +46,8 @@ class Configuration
             {
                 foreach ($group->getStores() as $store)
                 {
-                    $enabled = $store->getConfig('boxalino_exporter/general/enabled');
-                    if(!$enabled){ return; }
+                    $enabled = $store->getConfig('boxalino_exporter/general/status');
+                    if(!$enabled){ continue; }
 
                     $account = $store->getConfig('boxalino_exporter/general/account');
                     if($account == "")
@@ -193,7 +193,7 @@ class Configuration
      */
     public function isExportSchedulerEnabled() : bool
     {
-        return (bool) $this->getFirstAccountStore()->getConfig('boxalino_exporter/scheduler/enabled') == 1;
+        return (bool) $this->getFirstAccountStore()->getConfig('boxalino_exporter/scheduler/status') == 1;
     }
 
     /**
@@ -225,7 +225,7 @@ class Configuration
      */
     public function isCustomersExportEnabled() : bool
     {
-        return (bool) $this->getFirstAccountStore()->getConfig('boxalino_exporter/customers/enabled') == 1;
+        return (bool) $this->getFirstAccountStore()->getConfig('boxalino_exporter/customers/status') == 1;
     }
 
     /**
@@ -233,7 +233,7 @@ class Configuration
      */
     public function isTransactionsExportEnabled() : bool
     {
-        return (bool) $this->getFirstAccountStore()->getConfig('boxalino_exporter/transactions/enabled') == 1;
+        return (bool) $this->getFirstAccountStore()->getConfig('boxalino_exporter/transactions/status') == 1;
     }
 
     /**
@@ -241,7 +241,7 @@ class Configuration
      */
     public function getTransactionMode() : int
     {
-        return (int) $this->getFirstAccountStore()->getConfig('boxalino_exporter/transactions/export_mode');
+        return (int) $this->getFirstAccountStore()->getConfig('boxalino_exporter/transactions/mode');
     }
 
     /**
@@ -275,15 +275,15 @@ class Configuration
      */
     public function isAccountDev() : bool
     {
-        return (bool) $this->getFirstAccountStore()->getConfig('boxalino_exporter/general/dev');
+        return (bool) $this->getFirstAccountStore()->getConfig('boxalino_exporter/general/index');
     }
 
     /**
      * @return bool
      */
-    public function isProductsExportEnabled() : bool
+    public function isExportEnabled() : bool
     {
-        return (bool) $this->getFirstAccountStore()->getConfig('boxalino_exporter/general/enabled') == 1;
+        return (bool) $this->getFirstAccountStore()->getConfig('boxalino_exporter/general/status') == 1;
     }
 
     /**

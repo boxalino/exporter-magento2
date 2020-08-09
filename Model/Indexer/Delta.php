@@ -6,6 +6,8 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Class Delta
+ * Delta indexer : exports to DI the products updated within a configurable time frame
+ *
  * @package Boxalino\Exporter\Model\Indexer
  */
 class Delta implements \Magento\Framework\Indexer\ActionInterface,

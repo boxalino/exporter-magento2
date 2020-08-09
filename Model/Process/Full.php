@@ -5,37 +5,39 @@ use Boxalino\Exporter\Model\ProcessManager;
 
 /**
  * Class Full
+ * Full exporter process handler
  *
- * @package Boxalino\Exporter\Model\Exporter\Process
+ * @package Boxalino\Exporter\Model\Process
  */
 class Full extends ProcessManager
 {
-    /**
-     * Indexer ID in configuration
-     */
-    const INDEXER_ID = 'boxalino_exporter';
-
-    /**
-     * Indexer type
-     */
-    const INDEXER_TYPE = "full";
 
     /**
      * Default server timeout
      */
     const SERVER_TIMEOUT_DEFAULT = 3000;
 
+    /**
+     * @return string
+     */
     public function getType(): string
     {
-        return self::INDEXER_TYPE;
+        return \Boxalino\Exporter\Model\Indexer\Full::INDEXER_TYPE;
     }
 
+    /**
+     * @return string
+     */
     public function getIndexerId(): string
     {
-        return self::INDEXER_ID;
+        return \Boxalino\Exporter\Model\Indexer\Full::INDEXER_ID;
     }
 
-    public function exportDeniedOnAccount($account)
+    /**
+     * @param $account
+     * @return bool
+     */
+    public function exportDeniedOnAccount($account) : bool
     {
         return false;
     }
@@ -44,7 +46,7 @@ class Full extends ProcessManager
      * Get timeout for exporter
      * @return bool|int
      */
-    public function getTimeout($account)
+    public function getTimeout() : int
     {
         $customTimeout = $this->config->getExporterTimeout();
         if($customTimeout)
@@ -60,7 +62,7 @@ class Full extends ProcessManager
      *
      * @return null
      */
-    public function getLatestRun()
+    public function getLatestRun() : string
     {
         return $this->getLatestUpdatedAt($this->getIndexerId());
     }
@@ -78,7 +80,7 @@ class Full extends ProcessManager
     /**
      * @return bool
      */
-    public function isDelta()
+    public function isDelta() : bool
     {
         return false;
     }

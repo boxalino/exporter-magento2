@@ -4,8 +4,8 @@ namespace Boxalino\Exporter\Model;
 use Boxalino\Exporter\Api\ExporterInterface;
 use Boxalino\Exporter\Model\ResourceModel\ProcessManager as ProcessManagerResource;
 use Boxalino\Exporter\Service\Util\Configuration;
-use Boxalino\Exporter\Model\Indexer\Delta;
-use Boxalino\Exporter\Model\Indexer\Full;
+use Boxalino\Exporter\Model\Indexer\Delta as DeltaIndexer;
+use Boxalino\Exporter\Model\Indexer\Full as FullIndexer;
 use \Psr\Log\LoggerInterface;
 
 /**
@@ -81,8 +81,11 @@ abstract class ProcessManager
         $this->timezone = $timezone;
     }
 
-
-    public function run()
+    /**
+     * @return bool
+     * @throws \Exception
+     */
+    public function run() : bool
     {
         $configurations = $this->config->toString();
         if(empty($configurations))
@@ -102,11 +105,12 @@ abstract class ProcessManager
                 if($this->exportAllowedByAccount($account))
                 {
                     $exporterHasRun = true;
+                    $this->config->setAccount($account);
                     $this->exporterService
                         ->setAccount($account)
                         ->setDeltaIds($this->getIds())
                         ->setIsDelta($this->isDelta())
-                        ->setTimeoutForExporter($this->getTimeout($account))
+                        ->setTimeoutForExporter($this->getTimeout())
                         ->export();
                 }
             } catch (\Exception $exception) {
@@ -133,7 +137,7 @@ abstract class ProcessManager
      */
     public function processCanRun() : bool
     {
-        if(($this->getType() == Delta::INDEXER_TYPE) &&  $this->indexerModel->load(Full::INDEXER_ID)->isWorking())
+        if(($this->getType() == DeltaIndexer::INDEXER_TYPE) &&  $this->indexerModel->load(FullIndexer::INDEXER_ID)->isWorking())
         {
             $this->logger->info("Boxalino Exporter: Delta exporter will not run. Full exporter process must finish first.");
             return false;
@@ -171,7 +175,7 @@ abstract class ProcessManager
      * @param $id
      * @return string
      */
-    public function getLatestUpdatedAt(string $id) : string
+    public function getLatestUpdatedAt(string $id) : ?string
     {
         return $this->processResource->getLatestUpdatedAtByIndexerId($id);
     }
@@ -216,12 +220,12 @@ abstract class ProcessManager
         return $this->timezone->convertConfigTimeToUtc($time);
     }
 
-    abstract function getTimeout($account);
-    abstract function getLatestRun();
-    abstract function getIds();
-    abstract function exportDeniedOnAccount($account);
+    abstract function getTimeout() : int;
+    abstract function getLatestRun() : string;
+    abstract function getIds() : array;
+    abstract function exportDeniedOnAccount($account) : bool;
     abstract function getType() : string;
     abstract function getIndexerId() : string;
-    abstract function isDelta();
+    abstract function isDelta() : bool;
 
 }
