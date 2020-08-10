@@ -29,7 +29,7 @@ The exporter can be executed with the use of the Magento cron jobs.
 
 1. Edit & save the Boxalino Exporter configurations in your Magento Store Configurations.
 2. Create a crontab.xml in which the crons can be defined. *Pay attention to the scheduler times*
-``
+```
 <group id="default">
   <job name="boxalino_exporter_delta" instance="Boxalino\Exporter\Model\Indexer\Delta" method="execute">
       <schedule>*/30 7-23 * * *</schedule>
@@ -38,11 +38,13 @@ The exporter can be executed with the use of the Magento cron jobs.
         <schedule>15 2 * * *</schedule>
     </job>
 </group>
-``
+```
 
 The data synchronization can also be triggered with the use of a command line:
-``php bin/magento indexer:reindex boxalino_exporter``
-``php bin/magento indexer:reindex boxalino_exporter_delta``
+
+```php bin/magento indexer:reindex boxalino_exporter```
+
+```php bin/magento indexer:reindex boxalino_exporter_delta```
 
 ## Contact us!
 

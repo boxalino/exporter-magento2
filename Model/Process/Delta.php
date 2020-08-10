@@ -110,11 +110,7 @@ class Delta extends ProcessManager
             $directProductUpdates = $this->processResource->getProductIdsByUpdatedAt($lastUpdateDate);
             $categoryProductUpdates = $this->processResource->getAffectedEntityIds(\Boxalino\Exporter\Model\Indexer\Delta::INDEXER_ID);
 
-            $ids = array_filter(array_unique(array_merge($directProductUpdates, explode(",", $categoryProductUpdates))));
-            if(empty($ids))
-            {
-                $this->ids = [];
-            }
+            $this->ids = array_filter(array_unique(array_merge($directProductUpdates, explode(",", $categoryProductUpdates))));
         }
 
         return $this->ids;
