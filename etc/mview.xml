@@ -14,6 +14,7 @@
             <table name="catalog_product_entity_varchar" entity_column="entity_id" />
             <table name="catalog_category_product" entity_column="product_id" />
             <table name="catalog_product_website" entity_column="product_id" />
+            <table name="cataloginventory_stock_status" entity_column="product_id" />
         </subscriptions>
     </view>
     <view id="boxalino_exporter" class="Boxalino\Exporter\Model\Indexer\Full" group="default">
