@@ -521,8 +521,8 @@ class Product extends Base
                                 $this->getLibrary()->addSourceStringField($attributeSourceKey, "special_price_localized", $paramSpecialPriceLabel);
                             }
 
-                            $this->getLibrary()->addFieldParameter($this->getComponentSourceKey(),'bx_discountedprice', 'pc_fields', 'CASE WHEN (price.'.$paramSpecialPriceLabel.' IS NULL OR price.'.$paramSpecialPriceLabel.' <= 0) AND ref.value IS NOT NULL then ref.value ELSE price.'.$paramSpecialPriceLabel.' END as price_value');
-                            $this->getLibrary()->addFieldParameter($this->getComponentSourceKey(),'bx_discountedprice', 'pc_tables', 'LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_product_special_price` as price ON t.entity_id = price.entity_id, LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_resource_special_price` as ref ON t.entity_id = ref.parent_id');
+                            $this->getLibrary()->addFieldParameter($this->getComponentSourceKey(),'bx_discountedprice', 'pc_fields', 'CASE WHEN (price.'.$paramSpecialPriceLabel.' IS NULL OR price.'.$paramSpecialPriceLabel.' <= 0 OR min_price.'.$paramSpecialPriceLabel.' IS NULL) AND ref.value IS NOT NULL THEN ref.value WHEN (price.'.$paramSpecialPriceLabel.' IS NULL OR price.'.$paramSpecialPriceLabel.' <=0) THEN min_price.'.$paramSpecialPriceLabel.' ELSE LEAST(price.'.$paramSpecialPriceLabel.', min_price.'.$paramSpecialPriceLabel.') END as price_value');
+                            $this->getLibrary()->addFieldParameter($this->getComponentSourceKey(),'bx_discountedprice', 'pc_tables', 'LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_product_special_price` as price ON t.entity_id = price.entity_id, LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_resource_special_price` as ref ON t.entity_id = ref.parent_id, LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_product_min_price_index` as min_price ON t.entity_id = min_price.entity_id');
                             $this->getLibrary()->addResourceFile($this->getFiles()->getPath($type['attribute_code'] . '.csv'), 'parent_id', "value");
 
                             break;
@@ -552,6 +552,9 @@ class Product extends Base
         $this->getLibrary()->addFieldParameter($this->getComponentSourceKey(),'bx_grouped_price', 'pc_fields', 'CASE WHEN sref.value IS NOT NULL AND sref.value > 0 AND (ref.value IS NULL OR sref.value < ref.value) THEN sref.value WHEN ref.value IS NOT NULL then ref.value WHEN sprice.'.$paramSpecialPriceLabel.' IS NOT NULL AND sprice.'.$paramSpecialPriceLabel.' > 0 AND price.'.$paramPriceLabel.' > sprice.'.$paramSpecialPriceLabel.' THEN sprice.'.$paramSpecialPriceLabel.' ELSE price.'.$paramPriceLabel.' END as price_value');
         $this->getLibrary()->addFieldParameter($this->getComponentSourceKey(),'bx_grouped_price', 'pc_tables', 'LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_product_price` as price ON t.entity_id = price.entity_id, LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_resource_price` as ref ON t.group_id = ref.parent_id, LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_product_special_price` as sprice ON t.entity_id = sprice.entity_id, LEFT JOIN `%%EXTRACT_PROCESS_TABLE_BASE%%_products_resource_special_price` as sref ON t.group_id = sref.parent_id');
         $this->getLibrary()->addFieldParameter($this->getComponentSourceKey(),'bx_grouped_price', 'multiValued', 'false');
+
+        $this->exportIndexedPrices("final");
+        $this->exportIndexedPrices("min");
 
         $this->getFiles()->clearEmptyFiles("product_");
     }
@@ -728,6 +731,26 @@ class Product extends Base
         $this->getLibrary()->setCategoryField($productToCategoriesSourceKey, 'category_id');
 
         $this->getLogger()->info("Boxalino Exporter: CATEGORIES END.");
+    }
+
+    /**
+     * Export content as is defined in the Magento2 price index event
+     * This is to be used in case of
+     * @param string $type
+     */
+    public function exportIndexedPrices(string $type) : void
+    {
+        $attributeCode = $type."_price_index";
+        $filename = "product_{$attributeCode}.csv";
+
+        $data = $this->exporterResource->getIndexedPrice($type);
+        $data = array_merge([array_keys(end($data))], $data);
+        $this->getFiles()->savepartToCsv($filename, $data);
+
+        $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath($filename), "entity_id");
+        $this->getLibrary()->addSourceNumberField($attributeSourceKey, $attributeCode, "value");
+        $this->getLibrary()->addFieldParameter($attributeSourceKey, $attributeCode, 'multiValued', 'false');
+        $this->getLibrary()->addResourceFile($this->getLibrary()->getPath($filename), "entity_id", "value");
     }
 
     /**

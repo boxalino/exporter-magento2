@@ -8,4 +8,11 @@
     <preference for="Boxalino\Exporter\Api\Resource\ProductExporterResourceInterface" type="Boxalino\Exporter\Model\ResourceModel\Component\Product"/>
     <preference for="Boxalino\Exporter\Api\Resource\TransactionExporterResourceInterface" type="Boxalino\Exporter\Model\ResourceModel\Component\Transaction"/>
     <preference for="Boxalino\Exporter\Api\Resource\BaseExporterResourceInterface" type="Boxalino\Exporter\Model\ResourceModel\Component\Base"/>
+    <type name="Magento\Framework\Mview\View">
+        <arguments>
+            <argument name="changelogBatchSize" xsi:type="array">
+                <item name="boxalino_exporter_delta" xsi:type="number">100000</item>
+            </argument>
+        </arguments>
+    </type>
 </config>

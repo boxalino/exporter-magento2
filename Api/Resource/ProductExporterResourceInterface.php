@@ -138,6 +138,12 @@ interface ProductExporterResourceInterface extends BaseExporterResourceInterface
     public function getPriceSqlByType(string $type, string $key) : Select;
 
     /**
+     * @param string $type
+     * @return array
+     */
+    public function getIndexedPrice(string $type) : array;
+
+    /**
      * @param $storeId
      * @param $key
      * @return mixed
