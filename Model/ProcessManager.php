@@ -230,8 +230,25 @@ abstract class ProcessManager
      */
     public function setIds(array $ids)
     {
-        $this->ids = array_unique($ids) ?? [];
+        $ids = array_unique($ids) ?? [];
+        $this->ids = $this->addParentChildMatchToIds($ids);
+
         return $this;
+    }
+
+    /**
+     * @param array $ids
+     * @return array
+     */
+    protected function addParentChildMatchToIds(array $ids) : array
+    {
+        if(empty($ids))
+        {
+            return $ids;
+        }
+
+        $updatedWithParentChildMatches = $this->processResource->getChildParentIds($ids);
+        return array_unique(array_merge(array_column($updatedWithParentChildMatches, "entity_id"), $ids));
     }
 
     abstract function getTimeout() : int;

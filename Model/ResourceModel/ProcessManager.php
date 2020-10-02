@@ -112,4 +112,44 @@ class ProcessManager
             $dataBind, ["entity_id"]
         );
     }
+
+    /**
+     * @param array $ids
+     * @return array
+     */
+    public function getChildParentIds(array $ids) : array
+    {
+        $selectChild = $this->adapter->select()
+            ->from(
+                ['c_p_e' => $this->adapter->getTableName('catalog_product_entity')],
+                ['c_p_e.entity_id']
+            )
+            ->joinRight(
+                ['c_p_r_c' => $this->adapter->getTableName('catalog_product_relation')],
+                'c_p_e.entity_id = c_p_r_c.child_id',
+                ['id'=>'parent_id']
+            )
+            ->where("c_p_r_c.parent_id IN (?)", $ids);
+
+        $selectParent = $this->adapter->select()
+            ->from(
+                ['c_p_e' => $this->adapter->getTableName('catalog_product_entity')],
+                ['c_p_e.entity_id']
+            )
+            ->joinRight(
+                ['c_p_r_p' => $this->adapter->getTableName('catalog_product_relation')],
+                'c_p_e.entity_id = c_p_r_p.parent_id',
+                ['id'=>'child_id']
+            )
+            ->where("c_p_r_p.child_id IN (?)", $ids);
+
+        $select = $this->adapter->select()
+            ->union(
+                [$selectChild, $selectParent],
+                \Magento\Framework\DB\Select::SQL_UNION_ALL
+            )->group("entity_id");
+
+        return $this->adapter->fetchAll($select);
+    }
+
 }
