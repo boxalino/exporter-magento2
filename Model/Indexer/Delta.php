@@ -70,7 +70,7 @@ class Delta implements \Magento\Framework\Indexer\ActionInterface,
 
         if(!is_array($ids))
         {
-            $ids = [];
+            return true;
         }
         try{
             $this->processManager->setIds($ids);
