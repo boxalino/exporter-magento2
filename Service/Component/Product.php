@@ -750,7 +750,7 @@ class Product extends Base
         $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath($filename), "entity_id");
         $this->getLibrary()->addSourceNumberField($attributeSourceKey, $attributeCode, "value");
         $this->getLibrary()->addFieldParameter($attributeSourceKey, $attributeCode, 'multiValued', 'false');
-        $this->getLibrary()->addResourceFile($this->getLibrary()->getPath($filename), "entity_id", "value");
+        $this->getLibrary()->addResourceFile($this->getFiles()->getPath($filename), "entity_id", "value");
     }
 
     /**
