@@ -26,7 +26,7 @@ class ContentLibrary
     private $isDelta;
 
     private $delimiter = ',';
-    private $sources = array();
+    private $sources = [];
 
     private $host = 'http://di1.bx-cloud.com';
 
@@ -182,12 +182,12 @@ class ContentLibrary
         return $this->addSourceFile($filePath, $sourceId, $container, 'resource', 'CSV', $params);
     }
 
-    public function addSourceFile($filePath, $sourceId, $container, $type, $format='CSV', $params=array(), $validate=true) {
+    public function addSourceFile($filePath, $sourceId, $container, $type, $format='CSV', $params=[], $validate=true) {
         if(sizeof($this->getLanguages())==0) {
             throw new \Exception("BoxalinoLibraryError: trying to add a source before having declared the languages with method setLanguages");
         }
         if(!isset($this->sources[$container])) {
-            $this->sources[$container] = array();
+            $this->sources[$container] = [];
         }
         $params['filePath'] = $filePath;
         $params['format'] = $format;
@@ -212,7 +212,7 @@ class ContentLibrary
         if(!isset($this->sources[$container][$sourceId]['rows'])) {
             if (($handle = @fopen($this->sources[$container][$sourceId]['filePath'], "r")) !== FALSE) {
                 $count = 1;
-                $this->sources[$container][$sourceId]['rows'] = array();
+                $this->sources[$container][$sourceId]['rows'] = [];
                 while (($data = fgetcsv($handle, 2000, $this->delimiter)) !== FALSE) {
                     $this->sources[$container][$sourceId]['rows'][] = $data;
                     if($count++>=$maxRow) {
@@ -299,7 +299,7 @@ class ContentLibrary
     public function addSourceField($sourceKey, $fieldName, $type, $localized, $colMap, $referenceSourceKey=null, $validate=true) {
         list($container, $sourceId) = $this->decodeSourceKey($sourceKey);
         if(!isset($this->sources[$container][$sourceId]['fields'])) {
-            $this->sources[$container][$sourceId]['fields'] = array();
+            $this->sources[$container][$sourceId]['fields'] = [];
         }
         $this->sources[$container][$sourceId]['fields'][$fieldName] = array('type'=>$type, 'localized'=>$localized, 'map'=>$colMap, 'referenceSourceKey'=>$referenceSourceKey);
         if($this->sources[$container][$sourceId]['format'] == 'CSV') {
@@ -361,12 +361,12 @@ class ContentLibrary
             throw new \Exception("BoxalinoLibraryError: trying to add a field parameter on sourceId '$sourceId', container '$container', fieldName '$fieldName' while this field doesn't exist");
         }
         if(!isset($this->sources[$container][$sourceId]['fields'][$fieldName]['fieldParameters'])) {
-            $this->sources[$container][$sourceId]['fields'][$fieldName]['fieldParameters'] = array();
+            $this->sources[$container][$sourceId]['fields'][$fieldName]['fieldParameters'] = [];
         }
         $this->sources[$container][$sourceId]['fields'][$fieldName]['fieldParameters'][$parameterName] = $parameterValue;
     }
 
-    private $ftpSources = array();
+    private $ftpSources = [];
     public function setFtpSource($sourceKey, $host="di1.bx-cloud.com", $port=21, $user=null, $password=null, $remoteDir = '/sources/production', $protocol=0, $type=0, $logontype=1,
                                  $timezoneoffset=0, $pasvMode='MODE_DEFAULT', $maximumMultipeConnections=0, $encodingType='Auto', $bypassProxy=0, $syncBrowsing=0)
     {
@@ -378,7 +378,7 @@ class ContentLibrary
             $password = $this->getPassword();
         }
 
-        $params = array();
+        $params = [];
         $params['Host'] = $host;
         $params['Port'] = $port;
         $params['User'] = $user;
@@ -398,7 +398,7 @@ class ContentLibrary
         $this->ftpSources[$sourceId] = $params;
     }
 
-    private $httpSources = array();
+    private $httpSources = [];
     public function setHttpSource($sourceKey, $webDirectory, $user=null, $password=null, $header='User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:41.0) Gecko/20100101 Firefox/41.0') {
 
         if($user===null){
@@ -409,7 +409,7 @@ class ContentLibrary
             $password = $this->getPassword();
         }
 
-        $params = array();
+        $params = [];
         $params['WebDirectory'] = $webDirectory;
         $params['User'] = $user;
         $params['Pass'] = $password;
@@ -736,18 +736,11 @@ class ContentLibrary
 
     public function getSourceIdFromFileNameFromPath($filePath, $container, $maxLength=23, $withoutExtension=false) {
         $sourceId = $this->getFileNameFromPath($filePath, $withoutExtension);
-        $shortened = false;
         if(strlen($sourceId) > $maxLength) {
             $sourceId = substr($sourceId, 0, $maxLength);
-            $shortened = true;
         }
+
         if($this->alreadyExistingSourceId($sourceId, $container)) {
-            if(!$shortened) {
-                throw new \Exception(
-                    'BoxalinoLibraryError: Synchronization failure: Same source id requested twice "' .
-                    $filePath . '". Please correct that only created once.'
-                );
-            }
             $postFix = $this->getUnusedSourceIdPostFix($sourceId, $container);
             $sourceId .= $postFix;
         }
@@ -765,7 +758,7 @@ class ContentLibrary
     }
 
     public function getFiles() {
-        $files = array();
+        $files = [];
         foreach($this->sources as $container => $containerSources) {
             foreach($containerSources as $sourceId => $sourceValues) {
                 if(isset($this->ftpSources[$sourceId])) {
