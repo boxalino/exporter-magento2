@@ -142,7 +142,7 @@ class ContentLibrary
     public function addResourceFile($filePath, $categoryIdColumn, $labelColumns, $encoding = 'UTF-8', $delimiter = ',', $enclosure = "\&", $escape = "\\\\", $lineSeparator = "\\n", $sourceId = null, $container = 'products', $validate=true, $maxLength=23) {
         $params = array('referenceIdColumn'=>$categoryIdColumn, 'labelColumns'=>$labelColumns, 'encoding'=>$encoding, 'delimiter'=>$delimiter, 'enclosure'=>$enclosure, 'escape'=>$escape, 'lineSeparator'=>$lineSeparator);
         if($sourceId == null) {
-            $sourceId = 'resource_' . $this->getSourceIdFromFileNameFromPath($filePath, $container, $maxLength, true);
+            $sourceId = 'resource_' . $this->getSourceIdFromFileNameFromPath($filePath, $container, $maxLength-strlen('resource_'), true);
         }
         return $this->addSourceFile($filePath, $sourceId, $container, 'resource', 'CSV', $params, $validate);
     }
