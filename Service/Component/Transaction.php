@@ -239,11 +239,16 @@ class Transaction extends Base
     /**
      * Reading payment method name from payment additional information
      *
-     * @param string $additionalInformation
+     * @param string | null $additionalInformation
      * @return string
      */
-    protected function getMethodTitleFromAdditionalInformationJson(string $additionalInformation) : ?string
+    protected function getMethodTitleFromAdditionalInformationJson(?string $additionalInformation) : ?string
     {
+        if (is_null($additionalInformation))
+        {
+            return '';
+        }
+
         $additionalInformation = json_decode($additionalInformation, true);
         if(isset($additionalInformation['method_title']))
         {
