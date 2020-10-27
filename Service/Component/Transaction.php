@@ -131,6 +131,7 @@ class Transaction extends Base
                     {
                         case 'canceled':
                             break;
+                            break 2;
                         case 'processing':
                             $status = 1;
                             break;
