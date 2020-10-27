@@ -48,7 +48,7 @@ class FileHandler
     /**
      * Prepares rootr directory where the exported files are to be stored
      */
-    public function init() : void
+    public function init()
     {
         /** @var \Magento\Framework\Filesystem\Directory\Write $directory */
         $directory = $this->filesystem->getDirectoryWrite(
@@ -71,10 +71,10 @@ class FileHandler
      * @param string $dir
      * @return bool|void
      */
-    public function delTree(string $dir) : ?bool
+    public function delTree(string $dir) : bool
     {
         if (!file_exists($dir)) {
-            return null;
+            return false;
         }
         $files = array_diff(scandir($dir), array('.', '..'));
         foreach ($files as $file) {
@@ -91,7 +91,7 @@ class FileHandler
      * @param string $file
      * @param array $data
      */
-    public function savePartToCsv(string $file, array &$data) : void
+    public function savePartToCsv(string $file, array &$data)
     {
         $path = $this->getPath($file);
         $fh = fopen($path, 'a');

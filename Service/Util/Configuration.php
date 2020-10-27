@@ -36,7 +36,7 @@ class Configuration
     /**
      * @throws \Exception
      */
-    public function initialize() : void
+    public function initialize()
     {
         $this->indexConfig = [];
         $websites = $this->storeManager->getWebsites();
@@ -182,7 +182,7 @@ class Configuration
     /**
      * @return null | string
      */
-    public function getExporterTemporaryArchivePath() : ?string
+    public function getExporterTemporaryArchivePath()
     {
         $config = $this->getFirstAccountStore()->getConfig('boxalino_exporter/advanced/local_tmp');
         return empty($config) ? null : $config;

@@ -67,7 +67,7 @@ class Product extends Base
      * @TODO SRP
      * @throws \Exception
      */
-    public function export() : void
+    public function export()
     {
         $this->setContextOnResource();
         $this->setLanguages($this->getConfig()->getAccountLanguages());
@@ -149,7 +149,7 @@ class Product extends Base
      * @param array $attrs
      * @throws \Exception
      */
-    protected function exportAttributes(array $attrs = []) : void
+    protected function exportAttributes(array $attrs = [])
     {
         $this->getLogger()->info('Boxalino Exporter: PRODUCT - exportProductAttributes for account ' . $this->account);
         $paramPriceLabel = '';
@@ -575,7 +575,7 @@ class Product extends Base
         $this->getLogger()->info("Boxalino Exporter: PRODUCT INFORMATION FINISHED");
     }
 
-    protected function exportStockInformation() : void
+    protected function exportStockInformation()
     {
         $information = $this->exporterResource->getStockInformation();
         $data = [];
@@ -596,7 +596,7 @@ class Product extends Base
         }
     }
 
-    protected function exportWebsiteInformation() : void
+    protected function exportWebsiteInformation()
     {
         $information = $this->exporterResource->getWebsiteInformation();
         if(sizeof($information))
@@ -611,7 +611,7 @@ class Product extends Base
         }
     }
 
-    protected function exportParentCategoriesInformation() : void
+    protected function exportParentCategoriesInformation()
     {
         $productParentCategory = $this->exporterResource->getParentCategoriesInformation();
         $duplicateResult = $this->exporterResource->getParentCategoriesInformationByDuplicateIds($this->duplicateIds);
@@ -630,7 +630,7 @@ class Product extends Base
         $this->getFiles()->savePartToCsv('product_categories.csv', $d);
     }
 
-    protected function exportSuperLinkInformation() : void
+    protected function exportSuperLinkInformation()
     {
         $information = $this->exporterResource->getSuperLinkInformation();
         if(sizeof($information))
@@ -645,7 +645,7 @@ class Product extends Base
         }
     }
 
-    protected function exportLinkInformation() : void
+    protected function exportLinkInformation()
     {
         $information = $this->exporterResource->getLinksInformation();
         if(sizeof($information))
@@ -660,7 +660,7 @@ class Product extends Base
         }
     }
 
-    protected function exportParentTitleInformation() : void
+    protected function exportParentTitleInformation()
     {
         foreach ($this->getLanguages() as $language)
         {
@@ -713,7 +713,7 @@ class Product extends Base
     /**
      * @throws \Exception
      */
-    public function exportCategoriesInformation() : void
+    public function exportCategoriesInformation()
     {
         $this->getLogger()->info("Boxalino Exporter: CATEGORIES prepare export for each language of the account: $this->account");
         $categories = [];
@@ -738,7 +738,7 @@ class Product extends Base
      * This is to be used in case of
      * @param string $type
      */
-    public function exportIndexedPrices(string $type) : void
+    public function exportIndexedPrices(string $type)
     {
         $attributeCode = $type."_price_index";
         $filename = "product_{$attributeCode}.csv";
@@ -907,7 +907,7 @@ class Product extends Base
      * @param string $text
      * @return string|null
      */
-    public function sanitizeFieldName(string $text) : ?string
+    public function sanitizeFieldName(string $text)
     {
         $maxLength = 50;  $delimiter = "_";
         $text = preg_replace('~[^\\pL\d]+~u', $delimiter, $text);

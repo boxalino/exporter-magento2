@@ -8,7 +8,7 @@ namespace Boxalino\Exporter\Api;
  */
 interface ExporterInterface
 {
-    public function export() : void;
+    public function export();
     public function setAccount(string $account);
     public function getAccount() : string;
     public function setIsDelta(bool $isDelta);

@@ -2,7 +2,6 @@
 namespace Boxalino\Exporter\Model\Indexer;
 
 use Boxalino\Exporter\Model\Process\Delta as ProcessManager;
-use Psr\Log\LoggerInterface;
 
 /**
  * Class Delta
@@ -28,11 +27,6 @@ class Delta implements \Magento\Framework\Indexer\ActionInterface,
      * @var ProcessManager
      */
     protected $processManager;
-
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
 
     /**
      * BxDeltaExporter constructor.

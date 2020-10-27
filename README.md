@@ -4,6 +4,8 @@
 For the Magento2 integration, Boxalino comes with a divided approach: data exporter, framework layer and integration layer.
 The current repository is used for the data exporter layer.
 
+*It is an adaptation of the master branch to be used for PHP 7.0 setups.*
+
 ## About the data synchronization
 
 With the use of the Boxalino account it is possible to create 2 data indexes: *production* (your live setup) and *development* (staging area).

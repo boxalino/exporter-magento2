@@ -9,7 +9,7 @@ namespace Boxalino\Exporter\Model\Config\Source;
  */
 class DataIndex implements \Magento\Framework\Data\OptionSourceInterface
 {
-    public function toOptionArray()
+    public function toOptionArray() : array
     {
         return [
             ['value' => 1, 'label' => 'Development'],

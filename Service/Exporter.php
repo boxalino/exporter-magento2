@@ -71,7 +71,7 @@ class Exporter implements ExporterInterface
     /**
      * @throws \Exception
      */
-    public function export() : void
+    public function export()
     {
         $this->initFiles();
         $this->initLibrary();
@@ -99,7 +99,7 @@ class Exporter implements ExporterInterface
     /**
      * Initializes export directory and files handler for the process
      */
-    protected function initFiles() : void
+    protected function initFiles()
     {
         $this->getLogger()->info("Boxalino Exporter: initialize files on account: " . $this->getAccount());
         $this->getConfig()->setAccount($this->account);
@@ -109,7 +109,7 @@ class Exporter implements ExporterInterface
     /**
      * Initializes the xml/zip content library
      */
-    protected function initLibrary() : void
+    protected function initLibrary()
     {
         $this->getLogger()->info("Boxalino Exporter: Initialize content library for account: {$this->getAccount()}");
 
@@ -124,7 +124,7 @@ class Exporter implements ExporterInterface
      * Verifies credentials to the DI
      * If the server is too busy it will trigger a timeout but the export should not be stopped
      */
-    protected function verifyCredentials() : void
+    protected function verifyCredentials()
     {
         $this->getLogger()->info("Boxalino Exporter: verify credentials for account: " . $this->account);
         try{
@@ -143,7 +143,7 @@ class Exporter implements ExporterInterface
      * @return bool|string
      * @throws \Exception
      */
-    protected function prepareXmlConfigurations() : void
+    protected function prepareXmlConfigurations()
     {
         if ($this->isDelta())
         {
@@ -184,7 +184,7 @@ class Exporter implements ExporterInterface
      *
      * @return array|string
      */
-    protected function pushToDI() : void
+    protected function pushToDI()
     {
         $this->getLogger()->info('Boxalino Exporter: Push the Zip data file to the Data Indexing server for account: ' . $this->account);
         $this->getLogger()->info('Boxalino Exporter: pushing to DI for account: ' . $this->getAccount());
@@ -223,7 +223,7 @@ class Exporter implements ExporterInterface
     /**
      * Export customer data
      */
-    public function exportCustomers() : void
+    public function exportCustomers()
     {
         if($this->isDelta()) {
             return;
@@ -239,7 +239,7 @@ class Exporter implements ExporterInterface
     /**
      * Export order data
      */
-    public function exportTransactions() : void
+    public function exportTransactions()
     {
         if($this->isDelta()) {
             return;

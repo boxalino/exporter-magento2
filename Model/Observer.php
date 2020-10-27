@@ -42,7 +42,7 @@ class Observer implements ObserverInterface
      * @param \Magento\Framework\Event\Observer $observer
      * @return void
      */
-    public function execute(ObserverObject $observer) : void
+    public function execute(ObserverObject $observer)
     {
         try {
             $categoryAffectedProducts = $observer->getEvent()->getDataObject()->getAffectedProductIds();

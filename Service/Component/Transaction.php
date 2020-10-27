@@ -40,7 +40,7 @@ class Transaction extends Base
         $this->productFactory = $productFactory;
     }
 
-    public function export() : void
+    public function export()
     {
         if(!$this->getConfig()->isTransactionsExportEnabled())
         {
@@ -243,7 +243,7 @@ class Transaction extends Base
      * @param string | null $additionalInformation
      * @return string
      */
-    protected function getMethodTitleFromAdditionalInformationJson(?string $additionalInformation) : ?string
+    protected function getMethodTitleFromAdditionalInformationJson($additionalInformation = null)
     {
         if (is_null($additionalInformation))
         {

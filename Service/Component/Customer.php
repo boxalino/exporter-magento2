@@ -40,7 +40,7 @@ class Customer extends Base
     /**
      * @throws \Zend_Db_Select_Exception
      */
-    public function export() : void
+    public function export()
     {
         if(!$this->getConfig()->isCustomersExportEnabled())
         {

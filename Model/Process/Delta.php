@@ -144,7 +144,7 @@ class Delta extends ProcessManager
     /**
      * Resetting the affected products in case of a succesfull execution of delta export
      */
-    public function updateAffectedProductIds() : void
+    public function updateAffectedProductIds()
     {
         $this->processResource->updateAffectedEntityIds($this->getIndexerId(), "");
     }

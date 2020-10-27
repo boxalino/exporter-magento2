@@ -179,7 +179,7 @@ abstract class ProcessManager
      * @param $id
      * @return string
      */
-    public function getLatestUpdatedAt(string $id) : ?string
+    public function getLatestUpdatedAt(string $id)
     {
         return $this->processResource->getLatestUpdatedAtByIndexerId($id);
     }
@@ -215,7 +215,7 @@ abstract class ProcessManager
      * @return string
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function getUtcTime(?string $time=null) : string
+    public function getUtcTime($time=null) : string
     {
         if(is_null($time)) {
             return $this->timezone->convertConfigTimeToUtc($this->getCurrentStoreTime());
