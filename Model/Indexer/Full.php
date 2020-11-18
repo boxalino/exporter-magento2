@@ -56,7 +56,7 @@ class Full implements \Magento\Framework\Indexer\ActionInterface,
      */
     public function executeFull()
     {
-        if(!$this->processManager->processCanRun())
+        if($this->processManager->processCanRun())
         {
             try{
                 $startExportDate = $this->processManager->getUtcTime();
