@@ -60,7 +60,7 @@ class Delta implements \Magento\Framework\Indexer\ActionInterface,
      * @return void
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function execute($ids) : void
+    public function execute($ids)
     {
         if($this->processManager->processCanRun())
         {
