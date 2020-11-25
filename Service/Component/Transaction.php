@@ -130,6 +130,7 @@ class Transaction extends Base
                     switch ($transaction['status'])
                     {
                         case 'canceled':
+                            break;
                             break 2;
                         case 'processing':
                             $status = 1;
