@@ -130,8 +130,8 @@ class Transaction extends Base
                     switch ($transaction['status'])
                     {
                         case 'canceled':
-                            break;
-                            break 2;
+                            # cancelled transactions are not exported
+                            continue 2;
                         case 'processing':
                             $status = 1;
                             break;
@@ -151,9 +151,11 @@ class Transaction extends Base
                     'price' => $transaction['original_price'],
                     'discounted_price' => $transaction['price'],
                     'tax_amount'=> $transaction['tax_amount'],
+                    'refunded_amount' => $transaction['amount_refunded'],
                     'coupon_code' => $transaction['coupon_code'],
                     'currency' => $transaction['order_currency_code'],
                     'quantity' => $transaction['qty_ordered'],
+                    'quantity_refunded' => $transaction['qty_refunded'],
                     'subtotal' => $transaction['base_subtotal'],
                     'total_order_value' => $transaction['grand_total'],
                     'discount_amount' => $transaction['discount_amount'],
