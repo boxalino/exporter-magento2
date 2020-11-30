@@ -176,7 +176,7 @@ class Configuration
      */
     public function getExporterTimeout() : int
     {
-        return (int) $this->getFirstAccountStore()->getConfig('boxalino_exporter/advanced/timeout') ?? 3000;
+        return (int) $this->getFirstAccountStore()->getConfig('boxalino_exporter/advanced/timeout');
     }
 
     /**

@@ -24,7 +24,7 @@
                 <mode>1</mode>
             </transactions>
             <advanced>
-                <timeout>3000</timeout>
+                <timeout>300</timeout>
                 <publish_configuration_changes>1</publish_configuration_changes>
             </advanced>
         </boxalino_exporter>
