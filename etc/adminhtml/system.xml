@@ -141,7 +141,7 @@
                 <label>Advanced</label>
                 <field id="timeout" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>DI Response Wait Time</label>
-                    <comment>Optional: Keeping connection open to DI server in order to wait for processing the archive for any errors. Default set to 3000(sec).</comment>
+                    <comment>Optional: Keeping connection open to DI server in order to wait for processing the archive for any errors. Default set to 300(sec).</comment>
                 </field>
                 <field id="local_tmp" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Local Temporary Archive Path</label>

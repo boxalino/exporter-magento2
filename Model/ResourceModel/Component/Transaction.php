@@ -69,6 +69,8 @@ class Transaction extends Base
                     'original_price',
                     'product_type',
                     'qty_ordered',
+                    'qty_refunded',
+                    'amount_refunded',
                     'discount_amount',
                     'discount_percent',
                     'tax_amount'

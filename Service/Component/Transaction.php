@@ -130,7 +130,7 @@ class Transaction extends Base
                     switch ($transaction['status'])
                     {
                         case 'canceled':
-                            break 2;
+                            break;
                         case 'processing':
                             $status = 1;
                             break;
@@ -150,9 +150,11 @@ class Transaction extends Base
                     'price' => $transaction['original_price'],
                     'discounted_price' => $transaction['price'],
                     'tax_amount'=> $transaction['tax_amount'],
+                    'refunded_amount' => $transaction['amount_refunded'],
                     'coupon_code' => $transaction['coupon_code'],
                     'currency' => $transaction['order_currency_code'],
                     'quantity' => $transaction['qty_ordered'],
+                    'quantity_refunded' => $transaction['qty_refunded'],
                     'subtotal' => $transaction['base_subtotal'],
                     'total_order_value' => $transaction['grand_total'],
                     'discount_amount' => $transaction['discount_amount'],
@@ -181,7 +183,7 @@ class Transaction extends Base
                 $guest_id_transaction = null; $final_transaction = null;
             }
 
-            $data = $transactions_to_save;
+            $data = $transactions_to_save ?? [];
             $transactions_to_save = null; $configurable = null; $transactions = null;
 
             if ($header)

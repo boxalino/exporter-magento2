@@ -15,7 +15,7 @@ class Full extends ProcessManager
     /**
      * Default server timeout
      */
-    const SERVER_TIMEOUT_DEFAULT = 3000;
+    const SERVER_TIMEOUT_DEFAULT = 300;
 
     /**
      * @return string

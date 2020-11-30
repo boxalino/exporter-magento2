@@ -56,25 +56,22 @@ class Delta implements \Magento\Framework\Indexer\ActionInterface,
      */
     public function execute($ids)
     {
-        $startExportDate = $this->processManager->getUtcTime();
-        if(!$this->processManager->processCanRun())
+        if($this->processManager->processCanRun())
         {
-            return true;
-        }
-
-        if(!is_array($ids))
-        {
-            return true;
-        }
-        try{
-            $this->processManager->setIds($ids);
-            $status = $this->processManager->run();
-            if($status) {
-                $this->processManager->updateProcessRunDate($startExportDate);
-                $this->processManager->updateAffectedProductIds();
+            if(is_array($ids))
+            {
+                try{
+                    $startExportDate = $this->processManager->getUtcTime();
+                    $this->processManager->setIds($ids);
+                    $status = $this->processManager->run();
+                    if($status) {
+                        $this->processManager->updateProcessRunDate($startExportDate);
+                        $this->processManager->updateAffectedProductIds();
+                    }
+                } catch (\Exception $exception) {
+                    throw $exception;
+                }
             }
-        } catch (\Exception $exception) {
-            throw $exception;
         }
     }
 
@@ -85,20 +82,18 @@ class Delta implements \Magento\Framework\Indexer\ActionInterface,
      */
     public function executeFull()
     {
-        $startExportDate = $this->processManager->getUtcTime();
-        if(!$this->processManager->processCanRun())
+        if($this->processManager->processCanRun())
         {
-            return true;
-        }
-
-        try{
-            $status = $this->processManager->run();
-            if($status) {
-                $this->processManager->updateProcessRunDate($startExportDate);
-                $this->processManager->updateAffectedProductIds();
+            try{
+                $startExportDate = $this->processManager->getUtcTime();
+                $status = $this->processManager->run();
+                if($status) {
+                    $this->processManager->updateProcessRunDate($startExportDate);
+                    $this->processManager->updateAffectedProductIds();
+                }
+            } catch (\Exception $exception) {
+                throw $exception;
             }
-        } catch (\Exception $exception) {
-            throw $exception;
         }
     }
 

@@ -99,7 +99,7 @@ class Customer extends Base
                 $saveList[] = $customer;
             }
 
-            $data = $saveList;
+            $data = $saveList ?? [];
             if (count($customers) == 0 && $header) { return; }
             if ($header)
             {
