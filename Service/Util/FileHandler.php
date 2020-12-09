@@ -62,9 +62,16 @@ class FileHandler
         }
 
         $this->_dir = $this->_mainDir . '/' . $this->account;
-        if (file_exists($this->_dir)) {
-            $this->delTree($this->_dir);
+        try{
+            if (file_exists($this->_dir)) {
+                $this->delTree($this->_dir);
+            }
+        } catch(\Throwable $exception)
+        {
+            // do nothing;
+            // a scenario in which the directory can not be removed is due to UNIX .nfs files
         }
+
     }
 
     /**
