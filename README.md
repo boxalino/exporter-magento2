@@ -21,17 +21,19 @@ The export options have been designed as generic Magento 2 indexers. They can be
 2. The *Boxalino Delta Exporter* can be executed as often as every 25 min.
 *Beware*, there should be no delta exports for the 2 hours after a full data export.
 
-> It requires to be configured with the Magento Indexer mode "Update by Schedule". When not, the products export logic will rely on the catalog_product_entity.updated_at field to identify latest changes in the products.
+> It can be configured with the Magento Indexer mode "Update by Schedule". When "Update on Save" is used, the products export logic will rely on the catalog_product_entity.updated_at field to identify latest changes in the products.
 
 ## Setting up exporter
 
-The exporter can be executed with the use of the Magento cron jobs.
+> Check the  [exporter integration documentation](https://github.com/boxalino/rtux-integration-magento2/wiki/Exporter)
+
+The exporter can be executed with the use of the Magento cron jobs, mview or CLI.
 
 1. Edit & save the Boxalino Exporter configurations in your Magento Store Configurations.
 2. Create a crontab.xml in which the crons can be defined. *Pay attention to the scheduler times*
 ```
 <group id="default">
-  <job name="boxalino_exporter_delta" instance="Boxalino\Exporter\Model\Indexer\Delta" method="execute">
+  <job name="boxalino_exporter_delta" instance="Boxalino\Exporter\Model\Indexer\Delta" method="executeFull">
       <schedule>*/30 7-23 * * *</schedule>
   </job>
   <job name="boxalino_exporter" instance="Boxalino\Exporter\Model\Indexer\Full" method="executeFull">
@@ -39,6 +41,17 @@ The exporter can be executed with the use of the Magento cron jobs.
     </job>
 </group>
 ```
+
+> Add the cron job only for the indexer that uses the **"Update on Save"** mode (check the Index Management view in Magento2 back-end)
+
+4. If mview is enabled for the project, configure the schedule time to ensure that delta exports do not happen more often than every 30min.
+
+> The mview checks the "execute" function of the boxalino_exporter_delta indexer 
+> For the mview use, set the "Boxalino Delta Exporter" mode to **"Update by Schedule"**
+> Check the  [exporter integration documentation](https://github.com/boxalino/rtux-integration-magento2/wiki/Exporter
+
+
+### CLI
 
 The data synchronization can also be triggered with the use of a command line:
 

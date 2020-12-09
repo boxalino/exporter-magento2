@@ -82,8 +82,8 @@ class Delta implements \Magento\Framework\Indexer\ActionInterface,
     }
 
     /**
-     * Run on execute full command
-     * Run via the command line
+     * Run via the command line or cron job (Update on Save mode)
+     *
      * The delta IDs will be accessed by checking latest updated IDs
      */
     public function executeFull()

@@ -31,41 +31,7 @@
                 </field>
             </group>
 
-            <group id="scheduler" translate="label" type="text" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="0">
-                <label>Scheduler</label>
-                <!-- create text type field -->
-                <field id="status" translate="label" type="select" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Enable plugin scheduler control</label>
-                    <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
-                    <comment>Use the Plugin Export Scheduler to set boundaries on the data export. If disabled, your server crons will run as scheduled.</comment>
-                </field>
-                <field id="delta_min_interval" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Delta-Delta Period</label>
-                    <depends>
-                        <field id="*/exporter/enabled">1</field>
-                    </depends>
-                    <validate>validate-digits validate-not-negative-number</validate>
-                    <comment>The minimum time required between two consecutive delta exports (in minutes). Default value: 60min</comment>
-                </field>
-                <field id="delta_start" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Delta Daily Start</label>
-                    <depends>
-                        <field id="*/exporter/enabled">1</field>
-                    </depends>
-                    <validate>validate-digits validate-not-negative-number validate-digits-range digits-range-0-23</validate>
-                    <comment>Daily hour starting from the delta exports can be run</comment>
-                </field>
-                <field id="delta_end" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Delta Daily End</label>
-                    <depends>
-                        <field id="*/exporter/enabled">1</field>
-                    </depends>
-                    <validate>validate-digits validate-not-negative-number validate-digits-range digits-range-0-23</validate>
-                    <comment>Daily hour until when the delta exports can be run</comment>
-                </field>
-            </group>
-
-            <group id="products" translate="label" type="text"  sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="products" translate="label" type="text"  sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Products</label>
                 <!-- create text type field -->
                 <field id="extra_tables" translate="label comment" sortOrder="1" type="text" showInDefault="1" showInWebsite="1" showInStore="1">
@@ -89,6 +55,31 @@
                     <label>Export product URLs</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
                     <comment>Optional: Export product urls (not required if standard usage of search and recommendations  in Magento, as Magento renders the url itself).. If activated, makes export slower.</comment>
+                </field>
+            </group>
+
+            <group id="scheduler" translate="label" type="text" sortOrder="2" showInDefault="0" showInWebsite="1" showInStore="0">
+                <label>Delta Scheduler</label>
+                <!-- create text type field -->
+                <field id="status" translate="label" type="select" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enable plugin scheduler control</label>
+                    <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
+                    <comment>Use the Plugin Export Scheduler to set boundaries on the delta data export. Recommend when "Update by Schedule"/mview mode is used.</comment>
+                </field>
+                <field id="delta_min_interval" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Delta-Delta Period</label>
+                    <validate>validate-digits validate-not-negative-number</validate>
+                    <comment>The minimum time required between two consecutive delta exports (in minutes). Default value: 60min</comment>
+                </field>
+                <field id="delta_start" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Delta Daily Start</label>
+                    <validate>validate-digits validate-not-negative-number validate-digits-range digits-range-0-23</validate>
+                    <comment>Daily hour starting from the delta exports can be run</comment>
+                </field>
+                <field id="delta_end" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Delta Daily End</label>
+                    <validate>validate-digits validate-not-negative-number validate-digits-range digits-range-0-23</validate>
+                    <comment>Daily hour until when the delta exports can be run</comment>
                 </field>
             </group>
 
@@ -137,7 +128,7 @@
                 </field>
             </group>
 
-            <group id="advanced" translate="label" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="advanced" translate="label" type="text" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Advanced</label>
                 <field id="timeout" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>DI Response Wait Time</label>
