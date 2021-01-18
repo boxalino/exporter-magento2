@@ -744,6 +744,10 @@ class Product extends Base
         $filename = "product_{$attributeCode}.csv";
 
         $data = $this->exporterResource->getIndexedPrice($type);
+        if(empty($data))
+        {
+            $data = [["entity_id"=>"", "value"=>""]];
+        }
         $data = array_merge([array_keys(end($data))], $data);
         $this->getFiles()->savepartToCsv($filename, $data);
 
