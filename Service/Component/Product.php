@@ -205,27 +205,6 @@ class Product extends Base
                         }
                     }
 
-                    if ($type['attribute_code'] == 'url_key') {
-                        if (ProductMetadata::EDITION_NAME != "Community") {
-                            $select1 = $db->select()
-                                ->from(
-                                    array('t_g' => $this->rs->getTableName('catalog_product_entity_url_key')),
-                                    array('entity_id', 'attribute_id')
-                                )
-                                ->joinLeft(
-                                    array('t_s' => $this->rs->getTableName('catalog_product_entity_url_key')),
-                                    't_s.attribute_id = t_g.attribute_id AND t_s.entity_id = t_g.entity_id',
-                                    array('value' => 'IF(t_s.store_id IS NULL, t_g.value, t_s.value)')
-                                )
-                                ->where('t_g.attribute_id = ?', $typeKey)->where('t_g.store_id = 0 OR t_g.store_id = ?', $storeId);
-                            if($this->isDelta()) $select1->where('t_g.entity_id IN(?)', $this->getDeltaIds());
-                            foreach ($db->fetchAll($select1) as $r) {
-                                $data[] = $r;
-                            }
-                            continue;
-                        }
-                    }
-
                     if($optionSelect){
                         $fetchedOptionValues = $this->exporterResource->getAttributeOptionValuesByStoreAndKey($storeId, $typeKey);
                         if($fetchedOptionValues){
@@ -245,6 +224,10 @@ class Product extends Base
                         $fetchedOptionValues = null;
                     }
                     $select->where('t_d.attribute_id = ?', $typeKey)->where('t_d.store_id = 0 OR t_d.store_id = ?',$storeId);
+
+                    if ($type['attribute_code'] == 'url_key') {
+                        $select = $this->exporterResource->getSeoUrlInformationByStoreId($storeId);
+                    }
 
                     if ($type['attribute_code'] == 'visibility') {
                         $getValueForDuplicate = true;
@@ -566,7 +549,6 @@ class Product extends Base
     {
         $this->getLogger()->info('Boxalino Exporter: PRODUCT INFORMATION START for account ' . $this->account);
         $this->exportStockInformation();
-        $this->exportSeoUrlInformation();
         $this->exportWebsiteInformation();
         $this->exportParentCategoriesInformation();
         $this->exportSuperLinkInformation();
@@ -595,50 +577,6 @@ class Product extends Base
             $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_stock.csv'), 'entity_id');
             $this->getLibrary()->addSourceNumberField($attributeSourceKey, 'qty', 'qty');
         }
-    }
-
-    protected function exportSeoUrlInformation() : void
-    {
-        $db = $this->rs->getConnection();
-        foreach ($this->getLanguages() as $language)
-        {
-            $store = $this->getConfig()->getStore($language);
-            $storeId = $store->getId(); $store = null;
-
-            $query = $this->exporterResource->getSeoUrlInformationByStoreId($storeId);
-            $fetchedResult = $db->fetchAll($query);
-            if (sizeof($fetchedResult))
-            {
-                foreach ($fetchedResult as $r)
-                {
-                    if (isset($data[$r['entity_id']]))
-                    {
-                        $data[$r['entity_id']]['value_' . $language] = $r['value'];
-                    }
-
-                    $data[$r['entity_id']] = ['entity_id' => $r['entity_id'], 'value_' . $language => $r['value']];
-
-                    if(in_array($r['entity_id'], $this->duplicateIds))
-                    {
-                        $entityId = "duplicate".$r["entity_id"];
-                        if(isset($data[$entityId]))
-                        {
-                            $data[$entityId]['value_' . $language] = $r['value'];
-                        } else {
-                            $data[$entityId] = ['entity_id' => $entityId, 'value_' . $language => $r['value']];
-                        }
-                    }
-                }
-
-                $fetchedResult = null;
-            }
-        }
-        $data = array_merge(array(array_keys(end($data))), $data);
-        $this->getFiles()->savePartToCsv('product_di_url_key.csv', $data);
-
-        $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_di_url_key.csv'), 'entity_id');
-        $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey, 'di_url_key', $this->getLanguageHeaders());
-        $this->getLibrary()->addFieldParameter($attributeSourceKey,'di_url_key', 'multiValued', 'false');
     }
 
     protected function exportWebsiteInformation() : void
