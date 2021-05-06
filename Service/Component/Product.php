@@ -566,7 +566,7 @@ class Product extends Base
     {
         $this->getLogger()->info('Boxalino Exporter: PRODUCT INFORMATION START for account ' . $this->account);
         $this->exportStockInformation();
-        $this->exportSeoUrlInformation();
+        $this->exportParentSeoUrlInformation();
         $this->exportWebsiteInformation();
         $this->exportParentCategoriesInformation();
         $this->exportSuperLinkInformation();
@@ -597,7 +597,7 @@ class Product extends Base
         }
     }
 
-    protected function exportSeoUrlInformation() : void
+    protected function exportParentSeoUrlInformation() : void
     {
         $db = $this->rs->getConnection();
         foreach ($this->getLanguages() as $language)
@@ -605,7 +605,7 @@ class Product extends Base
             $store = $this->getConfig()->getStore($language);
             $storeId = $store->getId(); $store = null;
 
-            $query = $this->exporterResource->getSeoUrlInformationByStoreId($storeId);
+            $query = $this->exporterResource->getParentSeoUrlInformationByStoreId($storeId);
             $fetchedResult = $db->fetchAll($query);
             if (sizeof($fetchedResult))
             {
@@ -634,11 +634,11 @@ class Product extends Base
             }
         }
         $data = array_merge(array(array_keys(end($data))), $data);
-        $this->getFiles()->savePartToCsv('product_di_url_key.csv', $data);
+        $this->getFiles()->savePartToCsv('product_parent_url_key.csv', $data);
 
-        $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_di_url_key.csv'), 'entity_id');
-        $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey, 'di_url_key', $this->getLanguageHeaders());
-        $this->getLibrary()->addFieldParameter($attributeSourceKey,'di_url_key', 'multiValued', 'false');
+        $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_parent_url_key.csv'), 'entity_id');
+        $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey, 'parent_url_key', $this->getLanguageHeaders());
+        $this->getLibrary()->addFieldParameter($attributeSourceKey,'parent_url_key', 'multiValued', 'false');
     }
 
     protected function exportWebsiteInformation() : void

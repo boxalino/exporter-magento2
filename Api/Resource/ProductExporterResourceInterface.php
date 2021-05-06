@@ -130,6 +130,12 @@ interface ProductExporterResourceInterface extends BaseExporterResourceInterface
     public function getSeoUrlInformationByStoreId(int $storeId) : Select;
 
     /**
+     * @param int $storeId
+     * @return Select
+     */
+    public function getParentSeoUrlInformationByStoreId(int $storeId) : Select;
+
+    /**
      * @param string $type
      * @param string $key
      * @return array
