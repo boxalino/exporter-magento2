@@ -614,9 +614,9 @@ class Product extends Base
                     if (isset($data[$r['entity_id']]))
                     {
                         $data[$r['entity_id']]['value_' . $language] = $r['value'];
+                    } else {
+                        $data[$r['entity_id']] = ['entity_id' => $r['entity_id'], 'value_' . $language => $r['value']];
                     }
-
-                    $data[$r['entity_id']] = ['entity_id' => $r['entity_id'], 'value_' . $language => $r['value']];
 
                     if(in_array($r['entity_id'], $this->duplicateIds))
                     {
