@@ -624,9 +624,10 @@ class Product extends Base
                         if(isset($data[$entityId]))
                         {
                             $data[$entityId]['value_' . $language] = $r['value'];
-                        } else {
-                            $data[$entityId] = ['entity_id' => $entityId, 'value_' . $language => $r['value']];
+                            continue;
                         }
+
+                        $data[$entityId] = ['entity_id' => $entityId, 'value_' . $language => $r['value']];
                     }
                 }
 

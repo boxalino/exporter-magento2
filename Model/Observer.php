@@ -66,8 +66,9 @@ class Observer implements ObserverInterface
      */
     protected function getAffectedProductsList(array $newIds=[]) : array
     {
-        $oldIds = $this->processManager->getAffectedEntityIds(Delta::INDEXER_ID);
+        $oldIds = $this->processManager->getAffectedEntityIds(Delta::INDEXER_ID) ?? "";
         return array_filter(array_unique(array_merge(explode(",", $oldIds), $newIds)));
     }
+
 
 }

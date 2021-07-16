@@ -176,8 +176,8 @@ abstract class ProcessManager
     /**
      * Get indexer latest updated at
      *
-     * @param $id
-     * @return string
+     * @param string $id
+     * @return string | null
      */
     public function getLatestUpdatedAt(string $id) : ?string
     {
@@ -185,9 +185,9 @@ abstract class ProcessManager
     }
 
     /**
-     * @param $date
+     * @param string $date
      */
-    public function updateProcessRunDate(string $date)
+    public function updateProcessRunDate(string $date) : void
     {
         $this->processResource->updateIndexerUpdatedAt($this->getIndexerId(), $date);
     }

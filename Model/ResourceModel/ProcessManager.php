@@ -31,7 +31,7 @@ class ProcessManager
     /**
      * Check product IDs from last delta run
      *
-     * @param null | array $date
+     * @param null | string $date
      * @return array
      */
     public function getProductIdsByUpdatedAt(string $date) : array
@@ -48,28 +48,28 @@ class ProcessManager
     /**
      * Rollback indexer latest updated date in case of error
      *
-     * @param $id
-     * @param $updated
-     * @return int
+     * @param string $id
+     * @param string $updated
+     * @return void
      */
-    public function updateIndexerUpdatedAt(string $id, string $updated) : int
+    public function updateIndexerUpdatedAt(string $id, string $updated) : void
     {
         $dataBind = [
             "updated" => $updated,
             "indexer_id" => $id
         ];
 
-        return $this->adapter->insertOnDuplicate(
+        $this->adapter->insertOnDuplicate(
             $this->adapter->getTableName("boxalino_exporter"),
             $dataBind, ["updated"]
         );
     }
 
     /**
-     * @param $id
-     * @return string
+     * @param string $id
+     * @return string | null
      */
-    public function getLatestUpdatedAtByIndexerId(string $id) : string
+    public function getLatestUpdatedAtByIndexerId(string $id) : ?string
     {
         $select = $this->adapter->select()
             ->from($this->adapter->getTableName("boxalino_exporter"), ["updated"])
@@ -81,10 +81,10 @@ class ProcessManager
     /**
      * Getting a list of product IDs affected
      *
-     * @param $id
-     * @return string
+     * @param string $id
+     * @return string | null
      */
-    public function getAffectedEntityIds(string $id) : string
+    public function getAffectedEntityIds(string $id) : ?string
     {
         $select = $this->adapter->select()
             ->from($this->adapter->getTableName("boxalino_exporter"), ["entity_id"])
@@ -96,18 +96,18 @@ class ProcessManager
     /**
      * Updating the list of product IDs affected
      *
-     * @param int $id
+     * @param int | string $id
      * @param string $ids
-     * @return int
+     * @return void
      */
-    public function updateAffectedEntityIds(string $id, string $ids) : int
+    public function updateAffectedEntityIds(string $id, string $ids) : void
     {
         $dataBind = [
             "entity_id" => $ids,
             "indexer_id" => $id
         ];
 
-        return $this->adapter->insertOnDuplicate(
+        $this->adapter->insertOnDuplicate(
             $this->adapter->getTableName("boxalino_exporter"),
             $dataBind, ["entity_id"]
         );
@@ -151,5 +151,6 @@ class ProcessManager
 
         return $this->adapter->fetchAll($select);
     }
+
 
 }
