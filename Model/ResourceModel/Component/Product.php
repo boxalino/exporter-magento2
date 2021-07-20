@@ -543,6 +543,59 @@ class Product  extends Base
     }
 
     /**
+     * @return Select
+     */
+    public function getParentSeoUrlInformationByStoreId(int $storeId) : Select
+    {
+        $urlKeyAttrId = $this->getAttributeIdByAttributeCodeAndEntityType("url_key", \Magento\Catalog\Setup\CategorySetup::CATALOG_PRODUCT_ENTITY_TYPE_ID);
+        $urlKeySql = $this->getEavJoinAttributeSQLByStoreAttrIdTable($urlKeyAttrId, $storeId, "catalog_product_entity_varchar");
+
+        $select = $this->adapter->select()
+            ->from(
+                ['c_p_e' => $this->adapter->getTableName('catalog_product_entity')],
+                ['c_p_e.entity_id']
+            )
+            ->joinLeft(
+                ['c_p_r' => $this->adapter->getTableName('catalog_product_relation')],
+                'c_p_e.entity_id = c_p_r.child_id',
+                ['c_p_r.parent_id']
+            )
+            ->join(
+                ['c_p_e_u' => new \Zend_Db_Expr("( ". $urlKeySql->__toString() . ' )')],
+                "c_p_e.entity_id = c_p_e_u.entity_id",
+                ['entity_value'=>'c_p_e_u.value', 'entity_store_id' => 'c_p_e_u.store_id']
+            )
+            ->join(
+                ['c_p_e_u_p' => new \Zend_Db_Expr("( ". $urlKeySql->__toString() . ' )')],
+                "c_p_r.parent_id = c_p_e_u_p.entity_id",
+                ['parent_value'=>'c_p_e_u_p.value']
+            );
+
+        if(!empty($this->exportIds) && $this->isDelta)
+        {
+            $select->where('c_p_e.entity_id IN(?)', $this->exportIds);
+        }
+
+        $finalSelect = $this->adapter->select()
+            ->from(
+                ["entity_select" => new \Zend_Db_Expr("( ". $select->__toString() . " )")],
+                [
+                    "entity_select.entity_id",
+                    "store_id" => "entity_select.entity_store_id",
+                    "value" => new \Zend_Db_Expr("
+                        (CASE
+                            WHEN entity_select.parent_id IS NULL THEN entity_select.entity_value
+                            ELSE entity_select.parent_value
+                         END
+                        )"
+                    )
+                ]
+            );
+
+        return $finalSelect;
+    }
+
+    /**
      * @return array
      */
     public function getWebsiteInformation() : array
