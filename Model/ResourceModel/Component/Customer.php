@@ -72,6 +72,7 @@ class Customer extends Base
                 'customer_entity.entity_id = customer_address_entity.parent_id',
                 ['country_id', 'postcode']
             )
+            ->group("customer_entity.entity_id")
             ->limit($limit, ($page - 1) * $limit);
 
         return $this->adapter->fetchAll($select);

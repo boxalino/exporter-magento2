@@ -27,7 +27,7 @@ class Product  extends Base
     /**
      * @return array
      */
-    public function getAttributes() : array
+    public function getAttributes(): array
     {
         $select = $this->adapter->select()
             ->from(
@@ -49,7 +49,7 @@ class Product  extends Base
      * @param int $storeId
      * @return string
      */
-    public function getAttributeValue(string $id, string $attributeId, int $storeId) : string
+    public function getAttributeValue(string $id, string $attributeId, int $storeId): string
     {
         $select = $this->adapter->select()
             ->from(
@@ -77,7 +77,7 @@ class Product  extends Base
      * @param string $condition
      * @return array
      */
-    public function getDuplicateIds(int $storeId, string $attributeId, string $condition) : array
+    public function getDuplicateIds(int $storeId, string $attributeId, string $condition): array
     {
         $select = $this->adapter->select()
             ->from(
@@ -89,22 +89,21 @@ class Product  extends Base
             )->joinLeft(
                 ['c_p_e_a' => $this->adapter->getTableName('catalog_product_entity_int')],
                 'c_p_e_a.entity_id = c_p_r.child_id AND c_p_e_a.store_id = 0 AND c_p_e_a.attribute_id = ' . $attributeId,
-                ['default_store'=>'c_p_e_a.store_id']
+                ['default_store' => 'c_p_e_a.store_id']
             )->joinLeft(
                 ['c_p_e_b' => $this->adapter->getTableName('catalog_product_entity_int')],
                 'c_p_e_b.entity_id = c_p_r.child_id AND c_p_e_b.store_id = ' . $storeId . ' AND c_p_e_b.attribute_id = ' . $attributeId,
                 ['c_p_e_b.store_id']
             );
 
-        if(!empty($this->exportIds) && $this->isDelta)
-        {
+        if (!empty($this->exportIds) && $this->isDelta) {
             $select->where('c_p_r.parent_id IN(?)', $this->exportIds);
         }
 
-        $main =  $this->adapter->select()
+        $main = $this->adapter->select()
             ->from(
-                ['main'=> new \Zend_Db_Expr('( '. $select->__toString() . ' )')],
-                ['id'=>'child_id', 'child_id']
+                ['main' => new \Zend_Db_Expr('( ' . $select->__toString() . ' )')],
+                ['id' => 'child_id', 'child_id']
             )
             ->where('main.value <> ?', $condition);
 
@@ -116,7 +115,7 @@ class Product  extends Base
      * @param int $storeId
      * @return array
      */
-    public function getCategoriesByStoreId(int $storeId) : array
+    public function getCategoriesByStoreId(int $storeId): array
     {
         $attributeId = $this->getAttributeIdByAttributeCodeAndEntityType('name', \Magento\Catalog\Setup\CategorySetup::CATEGORY_ENTITY_TYPE_ID);
         $select = $this->adapter->select()
@@ -127,7 +126,7 @@ class Product  extends Base
             ->joinInner(
                 ['c_v_i' => $this->adapter->getTableName('catalog_category_entity_varchar')],
                 'c_v_i.entity_id = c_t.entity_id AND c_v_i.store_id = 0 AND c_v_i.attribute_id = ' . $attributeId,
-                ['value_default'=>'c_v_i.value']
+                ['value_default' => 'c_v_i.value']
             )
             ->joinLeft(
                 ['c_v_l' => $this->adapter->getTableName('catalog_category_entity_varchar')],
@@ -153,7 +152,7 @@ class Product  extends Base
      * @param int $page
      * @return array
      */
-    public function getByLimitPage(int $limit, int $page) : array
+    public function getByLimitPage(int $limit, int $page): array
     {
         $select = $this->adapter->select()
             ->from(
@@ -166,8 +165,7 @@ class Product  extends Base
                 'e.entity_id = p_t.child_id', ['group_id' => 'parent_id']
             );
 
-        if(!empty($this->exportIds) && $this->isDelta)
-        {
+        if (!empty($this->exportIds) && $this->isDelta) {
             $select->where('e.entity_id IN(?)', $this->exportIds);
         }
 
@@ -178,7 +176,7 @@ class Product  extends Base
      * @param array $codes
      * @return array
      */
-    public function getAttributesByCodes(array $codes = []) : array
+    public function getAttributesByCodes(array $codes = []): array
     {
         $select = $this->adapter->select()
             ->from(
@@ -200,11 +198,10 @@ class Product  extends Base
      * @param $key
      * @return array
      */
-    public function getPriceByType(string $type, string $key) : array
+    public function getPriceByType(string $type, string $key): array
     {
         $select = $this->getPriceSqlByType($type, $key);
-        if(!empty($this->exportIds) && $this->isDelta)
-        {
+        if (!empty($this->exportIds) && $this->isDelta) {
             $select->where('c_p_r.parent_id IN(?)', $this->exportIds);
         }
 
@@ -216,7 +213,7 @@ class Product  extends Base
      * @param string $key
      * @return \Magento\Framework\DB\Select
      */
-    public function getPriceSqlByType(string $type, string $key) : \Magento\Framework\DB\Select
+    public function getPriceSqlByType(string $type, string $key): \Magento\Framework\DB\Select
     {
         $statusId = $this->getAttributeIdByAttributeCodeAndEntityType('status', \Magento\Catalog\Setup\CategorySetup::CATALOG_PRODUCT_ENTITY_TYPE_ID);
         $select = $this->adapter->select()
@@ -244,15 +241,57 @@ class Product  extends Base
 
     /**
      * @param string $type
+     * @param int $websiteId
      * @return array
      */
-    public function getIndexedPrice(string $type) : array
+    public function getIndexedPrice(string $type, int $websiteId): array
     {
         $select = $this->adapter->select()
             ->from(
                 array('c_p_i' => $this->adapter->getTableName('catalog_product_index_price')),
-                ['entity_id', 'value'=>$type . "_price"]
+                ['entity_id', 'value' => $type . "_price"]
             )
+            ->where('website_id=?', $websiteId)
+            ->group(['entity_id']);
+
+        if (!empty($this->exportIds) && $this->isDelta) {
+            $select->where('c_p_i.entity_id IN(?)', $this->exportIds);
+        }
+
+        return $this->adapter->fetchAll($select);
+    }
+
+    /**
+     * @param int $websiteId
+     * @return array
+     */
+    public function getDistinctCustomerGroupIdsForPriceByWebsiteId(int $websiteId) : array
+    {
+        $select = $this->adapter->select()
+            ->from(
+                $this->adapter->getTableName('catalog_product_index_price'),
+                [new \Zend_Db_Expr("DISTINCT(customer_group_id) AS customer_group_id")]
+            )
+            ->where('website_id = ?', $websiteId);
+
+        return $this->adapter->fetchCol($select);
+    }
+
+    /**
+     * @param string $type
+     * @param int $websiteId
+     * @param string $customerGroupId
+     * @return array
+     */
+    public function getIndexedPriceForCustomerGroup(string $type, int $websiteId, string $customerGroupId) : array
+    {
+        $select = $this->adapter->select()
+            ->from(
+                array('c_p_i' => $this->adapter->getTableName('catalog_product_index_price')),
+                ['entity_id', 'value'=> $type . "_price"]
+            )
+            ->where('website_id = ?', $websiteId)
+            ->where('customer_group_id = ?', $customerGroupId)
             ->group(['entity_id']);
 
         if(!empty($this->exportIds) && $this->isDelta)

@@ -1,6 +1,7 @@
 <?php
 namespace Boxalino\Exporter\Service\Util;
 
+use Magento\Store\Api\Data\WebsiteInterface;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManagerInterface;
 
@@ -40,7 +41,7 @@ class Configuration
     {
         $this->indexConfig = [];
         $websites = $this->storeManager->getWebsites();
-        foreach($websites  as $website)
+        foreach($websites as $website)
         {
             foreach ($website->getGroups(true) as $group)
             {
@@ -69,7 +70,7 @@ class Configuration
                     if (array_key_exists($language, $this->indexConfig[$account]))
                     {
                         throw new \Exception(
-                            "Configuration error detected: Language '$language' can only be pushed to account '$account' once. Please review and correct your boxalino plugin's configuration, including the various configuration levels per website, store view, etc."
+                            "Configuration error detected: Language '$language' can only be pushed to account '$account' once. Please review the configurations per website & store-view: 1. There must be a Boxalino account per WEBSITE; 2. The store-view locale code must be unique per website. 3. If there are duplicate languages, disable the exporter on one of the store-views."
                         );
                     }
 
@@ -81,6 +82,24 @@ class Configuration
                 }
             }
         }
+    }
+
+    /**
+     * @return \Magento\Store\Api\Data\WebsiteInterface
+     */
+    public function getWebsite() : WebsiteInterface
+    {
+        return $this->getAccountFirstLanguageArray()['website'];
+    }
+
+    /**
+     * @return int
+     */
+    public function getWebsiteId() : int
+    {
+        $website = $this->getWebsite();
+
+        return $website->getId();
     }
 
     /**
