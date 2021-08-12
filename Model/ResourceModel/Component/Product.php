@@ -501,17 +501,17 @@ class Product  extends Base
                 'c_p_e.entity_id = c_p_r.child_id',
                 ['c_p_r.parent_id']
             )
-            ->join(
+            ->joinLeft(
                 ['c_p_e_u' => new \Zend_Db_Expr("( ". $urlKeySql->__toString() . ' )')],
                 "c_p_e.entity_id = c_p_e_u.entity_id",
                 ['entity_value'=>'c_p_e_u.value', 'entity_store_id' => 'c_p_e_u.store_id']
             )
-            ->join(
+            ->joinLeft(
                 ['c_p_e_u_p' => new \Zend_Db_Expr("( ". $urlKeySql->__toString() . ' )')],
                 "c_p_r.parent_id = c_p_e_u_p.entity_id",
                 ['parent_value'=>'c_p_e_u_p.value']
             )
-            ->join(
+            ->joinLeft(
                 ['c_p_e_v' => new \Zend_Db_Expr("( ". $visibilitySql->__toString() . ' )')],
                 "c_p_e.entity_id = c_p_e_v.entity_id",
                 ['entity_visibility'=>'c_p_e_v.value']
@@ -560,12 +560,12 @@ class Product  extends Base
                 'c_p_e.entity_id = c_p_r.child_id',
                 ['c_p_r.parent_id']
             )
-            ->join(
+            ->joinLeft(
                 ['c_p_e_u' => new \Zend_Db_Expr("( ". $urlKeySql->__toString() . ' )')],
                 "c_p_e.entity_id = c_p_e_u.entity_id",
                 ['entity_value'=>'c_p_e_u.value', 'entity_store_id' => 'c_p_e_u.store_id']
             )
-            ->join(
+            ->joinLeft(
                 ['c_p_e_u_p' => new \Zend_Db_Expr("( ". $urlKeySql->__toString() . ' )')],
                 "c_p_r.parent_id = c_p_e_u_p.entity_id",
                 ['parent_value'=>'c_p_e_u_p.value']

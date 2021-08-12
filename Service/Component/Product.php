@@ -277,7 +277,6 @@ class Product extends Base
                                     if (isset($additionalData[$row['entity_id']])) {
                                         if ($type['attribute_code'] == 'url_key') {
                                             $url = $storeBaseUrl . $row['value'] . '.html';
-
                                         } else {
                                             $url = $imageBaseUrl . $row['value'];
                                         }
@@ -299,6 +298,7 @@ class Product extends Base
                                         if(isset($this->duplicateIds[$row['entity_id']])){
                                             $additionalData['duplicate'.$row['entity_id']] = array(
                                                 'entity_id' => 'duplicate'.$row['entity_id'],
+                                                'store_id' => $row['store_id'],
                                                 'value_' . $lang => $url);
                                         }
                                     }
