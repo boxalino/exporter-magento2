@@ -17,7 +17,7 @@ class Product extends Base
     implements ProductExporterInterface
 {
 
-    const EXPORTER_COMPONENT_TYPE = 'products';
+    CONST EXPORTER_COMPONENT_TYPE = 'products';
 
     /**
      * @var \Magento\Framework\App\ResourceConnection
@@ -57,8 +57,7 @@ class Product extends Base
         BaseExporterResourceInterface $baseResource,
         \Magento\Framework\App\ResourceConnection $rs,
         ProductExporterResourceInterface $exporterResource
-    )
-    {
+    ){
         parent::__construct($logger, $baseResource);
         $this->exporterResource = $exporterResource;
         $this->rs = $rs;
@@ -68,15 +67,13 @@ class Product extends Base
      * @TODO SRP
      * @throws \Exception
      */
-    public function export(): void
+    public function export() : void
     {
         $this->setContextOnResource();
         $this->setLanguages($this->getConfig()->getAccountLanguages());
         $this->getLogger()->info('Boxalino Exporter: PRODUCT - START of export for account ' . $this->account);
 
-        $totalCount = 0;
-        $page = 1;
-        $header = true;
+        $totalCount = 0; $page = 1; $header = true;
         $attrs = $this->getAttributes();
         $this->getDuplicateIds();
 
@@ -87,21 +84,23 @@ class Product extends Base
 
             $data = [];
             $fetchedResult = $this->exporterResource->getByLimitPage(ProductExporterInterface::PAGINATION, $page);
-            if (sizeof($fetchedResult)) {
+            if(sizeof($fetchedResult)) {
                 foreach ($fetchedResult as $r) {
-                    if ($r['group_id'] == null) $r['group_id'] = $r['entity_id'];
+                    if($r['group_id'] == null) $r['group_id'] = $r['entity_id'];
                     $data[] = $r;
                     $totalCount++;
-                    if (isset($this->duplicateIds[$r['entity_id']])) {
+                    if(isset($this->duplicateIds[$r['entity_id']])){
                         $r['group_id'] = $r['entity_id'];
                         $r['entity_id'] = 'duplicate' . $r['entity_id'];
                         $data[] = $r;
                     }
                 }
             } else {
-                if ($totalCount == 0) {
+                if($totalCount == 0)
+                {
                     break;
                 }
+
                 break;
             }
 
@@ -115,7 +114,8 @@ class Product extends Base
             $page++;
         }
 
-        if ($page == 0) {
+        if($page == 0)
+        {
             $this->logger->info("Boxalino Exporter: NO PRODUCTS WERE FOUND FOR THE EXPORT.");
             $this->setSuccess(false);
             return;
@@ -128,10 +128,12 @@ class Product extends Base
         $productAttributes = $this->exporterResource->getAttributesByCodes($attrs);
         $this->getLogger()->info('Boxalino Exporter: PRODUCT - connected to DB, built attribute info query for account ' . $this->account);
 
-        $attrsFromDb = ['int' => [], 'varchar' => [], 'text' => [], 'decimal' => [], 'datetime' => []];
-        foreach ($productAttributes as $r) {
+        $attrsFromDb = ['int'=>[], 'varchar'=>[], 'text'=>[], 'decimal'=>[], 'datetime'=>[]];
+        foreach ($productAttributes as $r)
+        {
             $type = $r['backend_type'];
-            if (isset($attrsFromDb[$type])) {
+            if (isset($attrsFromDb[$type]))
+            {
                 $attrsFromDb[$type][$r['attribute_id']] = [
                     'attribute_code' => $r['attribute_code'],
                     'is_global' => $r['is_global'],
@@ -151,7 +153,7 @@ class Product extends Base
      * @param array $attrs
      * @throws \Exception
      */
-    protected function exportAttributes(array $attrs = []): void
+    protected function exportAttributes(array $attrs = []) : void
     {
         $this->getLogger()->info('Boxalino Exporter: PRODUCT - exportProductAttributes for account ' . $this->account);
         $paramPriceLabel = '';
@@ -165,24 +167,27 @@ class Product extends Base
             'store_id'
         );
         $this->getFiles()->prepareProductFiles($attrs);
-        foreach ($attrs as $attrKey => $types) {
-            foreach ($types as $typeKey => $type) {
-                $optionSelect = in_array($type['frontend_input'], ['multiselect', 'select']);
+        foreach($attrs as $attrKey => $types)
+        {
+            foreach ($types as $typeKey => $type)
+            {
+                $optionSelect = in_array($type['frontend_input'], ['multiselect','select']);
                 $data = [];
                 $additionalData = [];
                 $exportAttribute = false;
-                $global = ($type['is_global'] == 1) ? true : false;
+                $global =  ($type['is_global'] == 1) ? true : false;
                 $getValueForDuplicate = false;
                 $d = [];
                 $headerLangRow = [];
                 $optionValues = [];
 
-                foreach ($this->getLanguages() as $langIndex => $lang) {
+                foreach ($this->getLanguages() as $langIndex => $lang)
+                {
                     $select = $db->select()->from(
                         array('t_d' => $this->rs->getTableName('catalog_product_entity_' . $attrKey)),
                         $columns
                     );
-                    if ($this->isDelta()) $select->where('t_d.entity_id IN(?)', $this->getDeltaIds());
+                    if($this->isDelta()) $select->where('t_d.entity_id IN(?)', $this->getDeltaIds());
 
                     $labelColumns[$lang] = 'value_' . $lang;
                     $storeObject = $this->getConfig()->getStore($lang);
@@ -192,8 +197,9 @@ class Product extends Base
                     $imageBaseUrl = $storeObject->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . "catalog/product";
                     $storeObject = null;
 
-                    if ($type['attribute_code'] == 'price' || $type['attribute_code'] == 'special_price') {
-                        if ($langIndex == 0) {
+                    if ($type['attribute_code'] == 'price'|| $type['attribute_code'] == 'special_price')
+                    {
+                        if($langIndex == 0) {
                             $priceData = $this->exporterResource->getPriceByType($attrKey, $typeKey);
                             if (sizeof($priceData)) {
                                 $priceData = array_merge(array(array_keys(end($priceData))), $priceData);
@@ -204,25 +210,25 @@ class Product extends Base
                         }
                     }
 
-                    if ($optionSelect) {
+                    if($optionSelect) {
                         $fetchedOptionValues = $this->exporterResource->getAttributeOptionValuesByStoreAndKey($storeId, $typeKey);
-                        if ($fetchedOptionValues) {
-                            foreach ($fetchedOptionValues as $v) {
-                                if (isset($optionValues[$v['option_id']])) {
+                        if($fetchedOptionValues){
+                            foreach($fetchedOptionValues as $v){
+                                if(isset($optionValues[$v['option_id']])){
                                     $optionValues[$v['option_id']]['value_' . $lang] = $v['value'];
-                                } else {
+                                }else{
                                     $optionValues[$v['option_id']] = array($type['attribute_code'] . '_id' => $v['option_id'],
                                         'value_' . $lang => $v['value']);
                                 }
                             }
-                        } else {
+                        }else{
                             $optionValues = [];
                             $exportAttribute = true;
                             $optionSelect = false;
                         }
                         $fetchedOptionValues = null;
                     }
-                    $select->where('t_d.attribute_id = ?', $typeKey)->where('t_d.store_id = 0 OR t_d.store_id = ?', $storeId);
+                    $select->where('t_d.attribute_id = ?', $typeKey)->where('t_d.store_id = 0 OR t_d.store_id = ?',$storeId);
 
                     if ($type['attribute_code'] == 'url_key') {
                         $select = $this->exporterResource->getSeoUrlInformationByStoreId($storeId);
@@ -239,140 +245,167 @@ class Product extends Base
                     }
 
                     $fetchedResult = $db->fetchAll($select);
-                    if (sizeof($fetchedResult)) {
-                        foreach ($fetchedResult as $i => $row) {
-                            if (isset($data[$row['entity_id']]) && !$optionSelect) {
-                                if (isset($data[$row['entity_id']]['value_' . $lang])) {
-                                    if ($row['store_id'] > 0) {
+                    if (sizeof($fetchedResult))
+                    {
+                        foreach ($fetchedResult as $i => $row)
+                        {
+                            if (isset($data[$row['entity_id']]) && !$optionSelect)
+                            {
+                                if(isset($data[$row['entity_id']]['value_' . $lang]))
+                                {
+                                    if($row['store_id'] > 0){
                                         $data[$row['entity_id']]['value_' . $lang] = $row['value'];
-                                        if (isset($this->duplicateIds[$row['entity_id']])) {
-                                            $data['duplicate' . $row['entity_id']]['value_' . $lang] = $getValueForDuplicate ?
+                                        if(isset($this->duplicateIds[$row['entity_id']])) {
+                                            $data['duplicate'.$row['entity_id']]['value_' . $lang] = $getValueForDuplicate ?
                                                 $this->exporterResource->getAttributeValue($row['entity_id'], $typeKey, $storeId) :
                                                 $row['value'];
                                         }
-                                        if (isset($additionalData[$row['entity_id']])) {
+                                        if(isset($additionalData[$row['entity_id']])) {
                                             if ($type['attribute_code'] == 'url_key') {
                                                 $url = $storeBaseUrl . $row['value'] . '.html';
                                             } else {
                                                 $url = $imageBaseUrl . $row['value'];
                                             }
                                             $additionalData[$row['entity_id']]['value_' . $lang] = $url;
-                                            if (isset($this->duplicateIds[$row['entity_id']])) {
-                                                $additionalData['duplicate' . $row['entity_id']]['value_' . $lang] = $url;
+                                            if(isset($this->duplicateIds[$row['entity_id']])) {
+                                                $additionalData['duplicate'.$row['entity_id']]['value_' . $lang] = $url;
                                             }
                                         }
                                     }
                                 } else {
                                     $data[$row['entity_id']]['value_' . $lang] = $row['value'];
-                                    if (isset($this->duplicateIds[$row['entity_id']])) {
-                                        $data['duplicate' . $row['entity_id']]['value_' . $lang] = $getValueForDuplicate ?
+                                    if(isset($this->duplicateIds[$row['entity_id']])) {
+                                        $data['duplicate'.$row['entity_id']]['value_' . $lang] = $getValueForDuplicate ?
                                             $this->exporterResource->getAttributeValue($row['entity_id'], $typeKey, $storeId) :
                                             $row['value'];
                                     }
                                     if (isset($additionalData[$row['entity_id']])) {
                                         if ($type['attribute_code'] == 'url_key') {
                                             $url = $storeBaseUrl . $row['value'] . '.html';
-
                                         } else {
                                             $url = $imageBaseUrl . $row['value'];
                                         }
                                         $additionalData[$row['entity_id']]['value_' . $lang] = $url;
-                                        if (isset($this->duplicateIds[$row['entity_id']])) {
-                                            $additionalData['duplicate' . $row['entity_id']]['value_' . $lang] = $url;
+                                        if(isset($this->duplicateIds[$row['entity_id']])) {
+                                            $additionalData['duplicate'.$row['entity_id']]['value_' . $lang] = $url;
                                         }
                                     }
                                 }
                                 continue;
                             } else {
                                 if ($type['attribute_code'] == 'url_key') {
-                                    if ($this->getConfig()->exportProductUrl()) {
+                                    if ($this->getConfig()->exportProductUrl())
+                                    {
                                         $url = $storeBaseUrl . $row['value'] . '.html';
-                                        $additionalData[$row['entity_id']] = array('entity_id' => $row['entity_id'],
+                                        $additionalData[$row['entity_id']] = [
+                                            'entity_id' => $row['entity_id'],
                                             'store_id' => $row['store_id'],
-                                            'value_' . $lang => $url);
-                                        if (isset($this->duplicateIds[$row['entity_id']])) {
-                                            $additionalData['duplicate' . $row['entity_id']] = array(
-                                                'entity_id' => 'duplicate' . $row['entity_id'],
-                                                'value_' . $lang => $url);
+                                            'value_' . $lang => $url
+                                        ];
+                                        if(isset($this->duplicateIds[$row['entity_id']])) {
+                                            $additionalData['duplicate'.$row['entity_id']] = [
+                                                'entity_id' => 'duplicate'.$row['entity_id'],
+                                                'store_id' => $row['store_id'],
+                                                'value_' . $lang => $url
+                                            ];
                                         }
                                     }
                                 }
                                 if ($type['attribute_code'] == 'image') {
-                                    if ($this->getConfig()->exportProductImages()) {
+                                    if ($this->getConfig()->exportProductImages())
+                                    {
                                         $url = $imageBaseUrl . $row['value'];
-                                        $additionalData[$row['entity_id']] = array('entity_id' => $row['entity_id'],
-                                            'value_' . $lang => $url);
-                                        if (isset($this->duplicateIds[$row['entity_id']])) {
-                                            $additionalData['duplicate' . $row['entity_id']] = array(
-                                                'entity_id' => 'duplicate' . $row['entity_id'],
-                                                'value_' . $lang => $url);
+                                        $additionalData[$row['entity_id']] = [
+                                            'entity_id' => $row['entity_id'],
+                                            'value_' . $lang => $url
+                                        ];
+                                        if(isset($this->duplicateIds[$row['entity_id']])) {
+                                            $additionalData['duplicate'.$row['entity_id']] = [
+                                                'entity_id' => 'duplicate'.$row['entity_id'],
+                                                'value_' . $lang => $url
+                                            ];
                                         }
                                     }
                                 }
-                                if ($type['is_global'] != 1) {
-                                    if ($optionSelect) {
-                                        $values = explode(',', $row['value']);
-                                        foreach ($values as $v) {
-                                            $data[] = array('entity_id' => $row['entity_id'],
-                                                $type['attribute_code'] . '_id' => $v);
-                                            if (isset($this->duplicateIds[$row['entity_id']])) {
-                                                $data[] = array('entity_id' => 'duplicate' . $row['entity_id'],
-                                                    $type['attribute_code'] . '_id' => $v);
+                                if ($type['is_global'] != 1){
+                                    if($optionSelect)
+                                    {
+                                        $values = explode(',',$row['value']);
+                                        foreach($values as $v){
+                                            $data[] = [
+                                                'entity_id' => $row['entity_id'],
+                                                $type['attribute_code'] . '_id' => $v
+                                            ];
+                                            if(isset($this->duplicateIds[$row['entity_id']])) {
+                                                $data[] = [
+                                                    'entity_id' => 'duplicate'.$row['entity_id'],
+                                                    $type['attribute_code'] . '_id' => $v
+                                                ];
                                             }
                                         }
                                     } else {
-                                        if (!isset($data[$row['entity_id']])) {
-                                            $data[$row['entity_id']] = array('entity_id' => $row['entity_id'],
-                                                'store_id' => $row['store_id'], 'value_' . $lang => $row['value']);
-                                            if (isset($this->duplicateIds[$row['entity_id']])) {
-                                                $data['duplicate' . $row['entity_id']] = array(
-                                                    'entity_id' => 'duplicate' . $row['entity_id'],
+                                        if(!isset($data[$row['entity_id']])) {
+                                            $data[$row['entity_id']] = [
+                                                'entity_id' => $row['entity_id'],
+                                                'store_id' => $row['store_id'],
+                                                'value_' . $lang => $row['value']
+                                            ];
+                                            if(isset($this->duplicateIds[$row['entity_id']])) {
+                                                $data['duplicate'.$row['entity_id']] = [
+                                                    'entity_id' => 'duplicate'.$row['entity_id'],
                                                     'store_id' => $row['store_id'],
                                                     'value_' . $lang => $getValueForDuplicate ?
                                                         $this->exporterResource->getAttributeValue($row['entity_id'], $typeKey, $storeId)
                                                         : $row['value']
-                                                );
+                                                ];
                                             }
                                         }
                                     }
                                     continue;
-                                } else {
-                                    if ($optionSelect) {
-                                        $values = explode(',', $row['value']);
-                                        foreach ($values as $v) {
-                                            if (!isset($data[$row['entity_id'] . $v])) {
-                                                $data[$row['entity_id'] . $v] = array('entity_id' => $row['entity_id'],
-                                                    $type['attribute_code'] . '_id' => $v);
-                                                if (isset($this->duplicateIds[$row['entity_id']])) {
-                                                    $data[] = array('entity_id' => 'duplicate' . $row['entity_id'],
-                                                        $type['attribute_code'] . '_id' => $v);
+                                }else{
+                                    if($optionSelect){
+                                        $values = explode(',',$row['value']);
+                                        foreach($values as $v) {
+                                            if(!isset($data[$row['entity_id'].$v])) {
+                                                $data[$row['entity_id'].$v] = [
+                                                    'entity_id' => $row['entity_id'],
+                                                    $type['attribute_code'] . '_id' => $v
+                                                ];
+                                                if(isset($this->duplicateIds[$row['entity_id']])) {
+                                                    $data[] = [
+                                                        'entity_id' => 'duplicate'.$row['entity_id'],
+                                                        $type['attribute_code'] . '_id' => $v
+                                                    ];
                                                 }
                                             }
                                         }
-                                    } else {
+                                    }else{
                                         $valueLabel = $type['attribute_code'] == 'visibility' ||
                                         $type['attribute_code'] == 'status' ||
                                         $type['attribute_code'] == 'special_from_date' ||
                                         $type['attribute_code'] == 'special_to_date' ? 'value_' . $lang : 'value';
-                                        $data[$row['entity_id']] = array('entity_id' => $row['entity_id'],
+
+                                        $data[$row['entity_id']] = [
+                                            'entity_id' => $row['entity_id'],
                                             'store_id' => $row['store_id'],
-                                            $valueLabel => $row['value']);
-                                        if (isset($this->duplicateIds[$row['entity_id']])) {
-                                            $data['duplicate' . $row['entity_id']] = array(
-                                                'entity_id' => 'duplicate' . $row['entity_id'],
+                                            $valueLabel => $row['value']
+                                        ];
+                                        if(isset($this->duplicateIds[$row['entity_id']])) {
+                                            $data['duplicate'.$row['entity_id']] = [
+                                                'entity_id' => 'duplicate'.$row['entity_id'],
                                                 'store_id' => $row['store_id'],
                                                 $valueLabel => $getValueForDuplicate ?
                                                     $this->exporterResource->getAttributeValue($row['entity_id'], $typeKey, $storeId)
                                                     : $row['value']
-                                            );
+                                            ];
                                         }
                                     }
                                 }
                             }
                         }
-                        if ($type['is_global'] == 1 && !$optionSelect) {
+                        if($type['is_global'] == 1 && !$optionSelect) {
                             $global = true;
-                            if ($type['attribute_code'] != 'visibility'
+                            if($type['attribute_code'] != 'visibility'
                                 && $type['attribute_code'] != 'status'
                                 && $type['attribute_code'] != 'special_from_date'
                                 && $type['attribute_code'] != 'special_to_date'
@@ -383,10 +416,10 @@ class Product extends Base
                     }
                 }
 
-                if ($optionSelect || $exportAttribute) {
+                if($optionSelect || $exportAttribute){
                     $optionHeader = array_merge(array($type['attribute_code'] . '_id'), $labelColumns);
                     $a = array_merge(array($optionHeader), $optionValues);
-                    $this->getFiles()->savepartToCsv($type['attribute_code'] . '.csv', $a);
+                    $this->getFiles()->savepartToCsv( $type['attribute_code'].'.csv', $a);
                     $optionValues = null;
                     $a = null;
                     $optionSourceKey = $this->getLibrary()->addResourceFile(
@@ -395,41 +428,47 @@ class Product extends Base
                         $labelColumns
                     );
 
-                    if (sizeof($data) == 0 && !$this->isDelta()) {
-                        $d = array(array('entity_id', $type['attribute_code'] . '_id'));
-                        $this->getFiles()->savepartToCsv('product_' . $type['attribute_code'] . '.csv', $d);
+                    if(sizeof($data) == 0 && !$this->isDelta())
+                    {
+                        $d = array(array('entity_id',$type['attribute_code'] . '_id'));
+                        $this->getFiles()->savepartToCsv('product_' . $type['attribute_code'] . '.csv',$d);
                         $fieldId = $this->sanitizeFieldName($type['attribute_code']);
                         $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_' . $type['attribute_code'] . '.csv'), 'entity_id');
-                        $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey, $type['attribute_code'], $type['attribute_code'] . '_id', $optionSourceKey);
+                        $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey,$type['attribute_code'], $type['attribute_code'] . '_id', $optionSourceKey);
                     }
                 }
 
-                if (sizeof($data) || in_array($type['attribute_code'], $this->getRequiredAttributes())) {
-                    if (!$global || $type['attribute_code'] == 'visibility' ||
+                if (sizeof($data) || in_array($type['attribute_code'], $this->getRequiredAttributes()))
+                {
+                    if(!$global || $type['attribute_code'] == 'visibility' ||
                         $type['attribute_code'] == 'status' ||
                         $type['attribute_code'] == 'special_from_date' ||
-                        $type['attribute_code'] == 'special_to_date') {
-                        if (!$optionSelect) {
-                            $headerLangRow = array_merge(array('entity_id', 'store_id'), $labelColumns);
-                            if (sizeof($additionalData)) {
-                                $additionalHeader = array_merge(array('entity_id', 'store_id'), $labelColumns);
+                        $type['attribute_code'] == 'special_to_date')
+                    {
+                        if(!$optionSelect)
+                        {
+                            $headerLangRow = array_merge(array('entity_id','store_id'), $labelColumns);
+                            if(sizeof($additionalData))
+                            {
+                                $additionalHeader = array_merge(array('entity_id','store_id'), $labelColumns);
                                 $d = array_merge(array($additionalHeader), $additionalData);
-                                if ($type['attribute_code'] == 'url_key') {
+                                if ($type['attribute_code'] == 'url_key')
+                                {
                                     $this->getFiles()->savepartToCsv('product_default_url.csv', $d);
                                     $sourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_default_url.csv'), 'entity_id');
                                     $this->getLibrary()->addSourceLocalizedTextField($sourceKey, 'default_url', $labelColumns);
                                 } else {
                                     $this->getFiles()->savepartToCsv('product_cache_image_url.csv', $d);
                                     $sourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_cache_image_url.csv'), 'entity_id');
-                                    $this->getLibrary()->addSourceLocalizedTextField($sourceKey, 'cache_image_url', $labelColumns);
+                                    $this->getLibrary()->addSourceLocalizedTextField($sourceKey, 'cache_image_url',$labelColumns);
                                 }
                             }
                             $d = array_merge(array($headerLangRow), $data);
-                        } else {
-                            $d = array_merge(array(array('entity_id', $type['attribute_code'] . '_id')), $data);
+                        }else{
+                            $d = array_merge(array(array('entity_id',$type['attribute_code'] . '_id')), $data);
                         }
                     } else {
-                        if (empty($data)) {
+                        if(empty($data)){
                             $d = array(array("entity_id", "store_id", "value"));
                         } else {
                             $d = array_merge(array(array_keys(end($data))), $data);
@@ -439,9 +478,10 @@ class Product extends Base
                     $this->getFiles()->savepartToCsv('product_' . $type['attribute_code'] . '.csv', $d);
                     $fieldId = $this->sanitizeFieldName($type['attribute_code']);
                     $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_' . $type['attribute_code'] . '.csv'), 'entity_id');
-                    switch ($type['attribute_code']) {
+                    switch($type['attribute_code'])
+                    {
                         case $optionSelect == true:
-                            $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey, $type['attribute_code'],
+                            $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey,$type['attribute_code'],
                                 $type['attribute_code'] . '_id', $optionSourceKey);
                             break;
                         case 'name':
@@ -464,7 +504,8 @@ class Product extends Base
                             $this->getLibrary()->addSourceListPriceField($this->getComponentSourceKey(), 'entity_id');
                             $paramPriceLabel = 'value';
 
-                            if (!$global) {
+                            if(!$global)
+                            {
                                 $paramPriceLabel = reset($labelColumns);
                                 $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey, "price_localized", $labelColumns);
                             } else {
@@ -480,7 +521,8 @@ class Product extends Base
                             $this->getLibrary()->addSourceDiscountedPriceField($this->getComponentSourceKey(), 'entity_id');
                             $paramSpecialPriceLabel = "value";
 
-                            if (!$global) {
+                            if(!$global)
+                            {
                                 $paramSpecialPriceLabel = reset($labelColumns);
                                 $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey, "special_price_localized", $labelColumns);
                             } else {
@@ -496,11 +538,13 @@ class Product extends Base
                             $this->getLibrary()->addSourceNumberField($attributeSourceKey, $fieldId, 'value');
                             break;
                         default:
-                            if (!$global) {
-                                $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey, $fieldId, $labelColumns);
-                            } else {
+                            if($global)
+                            {
                                 $this->getLibrary()->addSourceStringField($attributeSourceKey, $fieldId, 'value');
+                            } else {
+                                $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey, $fieldId, $labelColumns);
                             }
+
                             break;
                     }
                 }
@@ -531,7 +575,7 @@ class Product extends Base
     {
         $this->getLogger()->info('Boxalino Exporter: PRODUCT INFORMATION START for account ' . $this->account);
         $this->exportStockInformation();
-        $this->exportParentSeoUrlInformation();
+        $this->_exportSeoUrlInformationByTypeName("getParentSeoUrlInformationByStoreId", "parent_url_key");
         $this->exportWebsiteInformation();
         $this->exportParentCategoriesInformation();
         $this->exportSuperLinkInformation();
@@ -541,15 +585,17 @@ class Product extends Base
         $this->getLogger()->info("Boxalino Exporter: PRODUCT INFORMATION FINISHED");
     }
 
-    protected function exportStockInformation(): void
+    protected function exportStockInformation() : void
     {
         $information = $this->exporterResource->getStockInformation();
         $data = [];
-        if (sizeof($information)) {
-            foreach ($information as $r) {
-                $data[] = array('entity_id' => $r['entity_id'], 'qty' => $r['qty']);
-                if (isset($this->duplicateIds[$r['entity_id']])) {
-                    $data[] = array('entity_id' => 'duplicate' . $r['entity_id'], 'qty' => $r['qty']);
+        if(sizeof($information))
+        {
+            foreach ($information as $r)
+            {
+                $data[] = array('entity_id'=>$r['entity_id'], 'qty'=>$r['qty']);
+                if(isset($this->duplicateIds[$r['entity_id']])){
+                    $data[] = array('entity_id'=>'duplicate'.$r['entity_id'], 'qty'=>$r['qty']);
                 }
             }
             $d = array_merge(array(array_keys(end($data))), $data);
@@ -560,27 +606,37 @@ class Product extends Base
         }
     }
 
-    protected function exportParentSeoUrlInformation(): void
+    /**
+     * @param string $type
+     * @param string $propertyName
+     * @throws \Exception
+     */
+    protected function _exportSeoUrlInformationByTypeName(string $type, string $propertyName) : void
     {
         $db = $this->rs->getConnection();
-        foreach ($this->getLanguages() as $language) {
+        foreach ($this->getLanguages() as $language)
+        {
             $store = $this->getConfig()->getStore($language);
-            $storeId = $store->getId();
-            $store = null;
+            $storeId = $store->getId(); $store = null;
 
-            $query = $this->exporterResource->getParentSeoUrlInformationByStoreId($storeId);
+            $query = $this->exporterResource->$type($storeId);
             $fetchedResult = $db->fetchAll($query);
-            if (sizeof($fetchedResult)) {
-                foreach ($fetchedResult as $r) {
-                    if (isset($data[$r['entity_id']])) {
+            if (sizeof($fetchedResult))
+            {
+                foreach ($fetchedResult as $r)
+                {
+                    if (isset($data[$r['entity_id']]))
+                    {
                         $data[$r['entity_id']]['value_' . $language] = $r['value'];
                     } else {
                         $data[$r['entity_id']] = ['entity_id' => $r['entity_id'], 'value_' . $language => $r['value']];
                     }
 
-                    if (in_array($r['entity_id'], $this->duplicateIds)) {
-                        $entityId = "duplicate" . $r["entity_id"];
-                        if (isset($data[$entityId])) {
+                    if(in_array($r['entity_id'], $this->duplicateIds))
+                    {
+                        $entityId = "duplicate".$r["entity_id"];
+                        if(isset($data[$entityId]))
+                        {
                             $data[$entityId]['value_' . $language] = $r['value'];
                         } else {
                             $data[$entityId] = ['entity_id' => $entityId, 'value_' . $language => $r['value']];
@@ -591,18 +647,20 @@ class Product extends Base
                 $fetchedResult = null;
             }
         }
-        $data = array_merge(array(array_keys(end($data))), $data);
-        $this->getFiles()->savePartToCsv('product_parent_url_key.csv', $data);
 
-        $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_parent_url_key.csv'), 'entity_id');
-        $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey, 'parent_url_key', $this->getLanguageHeaders());
-        $this->getLibrary()->addFieldParameter($attributeSourceKey, 'parent_url_key', 'multiValued', 'false');
+        $data = array_merge(array(array_keys(end($data))), $data);
+        $this->getFiles()->savePartToCsv("product_{$propertyName}.csv", $data);
+
+        $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath("product_{$propertyName}.csv"), 'entity_id');
+        $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey, $propertyName, $this->getLanguageHeaders());
+        $this->getLibrary()->addFieldParameter($attributeSourceKey, $propertyName, 'multiValued', 'false');
     }
 
-    protected function exportWebsiteInformation(): void
+    protected function exportWebsiteInformation() : void
     {
         $information = $this->exporterResource->getWebsiteInformation();
-        if (sizeof($information)) {
+        if(sizeof($information))
+        {
             $data = $this->duplicate($information);
             $d = array_merge(array(array_keys(end($data))), $data);
             $this->getFiles()->savePartToCsv('product_website.csv', $d);
@@ -613,15 +671,17 @@ class Product extends Base
         }
     }
 
-    protected function exportParentCategoriesInformation(): void
+    protected function exportParentCategoriesInformation() : void
     {
         $productParentCategory = $this->exporterResource->getParentCategoriesInformation();
         $duplicateResult = $this->exporterResource->getParentCategoriesInformationByDuplicateIds($this->duplicateIds);
-        foreach ($duplicateResult as $r) {
-            $r['entity_id'] = 'duplicate' . $r['entity_id'];
+        foreach ($duplicateResult as $r)
+        {
+            $r['entity_id'] = 'duplicate'.$r['entity_id'];
             $productParentCategory[] = $r;
         }
-        if (empty($productParentCategory)) {
+        if (empty($productParentCategory))
+        {
             $d = [['entity_id', 'category_id']];
         } else {
             $d = array_merge(array(array_keys(end($productParentCategory))), $productParentCategory);
@@ -630,10 +690,11 @@ class Product extends Base
         $this->getFiles()->savePartToCsv('product_categories.csv', $d);
     }
 
-    protected function exportSuperLinkInformation(): void
+    protected function exportSuperLinkInformation() : void
     {
         $information = $this->exporterResource->getSuperLinkInformation();
-        if (sizeof($information)) {
+        if(sizeof($information))
+        {
             $data = $this->duplicate($information);
             $d = array_merge(array(array_keys(end($data))), $data);
             $this->getFiles()->savePartToCsv('product_parent.csv', $d);
@@ -644,10 +705,11 @@ class Product extends Base
         }
     }
 
-    protected function exportLinkInformation(): void
+    protected function exportLinkInformation() : void
     {
         $information = $this->exporterResource->getLinksInformation();
-        if (sizeof($information)) {
+        if(sizeof($information))
+        {
             $data = $this->duplicate($information);
             $d = array_merge(array(array_keys(end($data))), $data);
             $this->getFiles()->savePartToCsv('product_links.csv', $d);
@@ -658,19 +720,23 @@ class Product extends Base
         }
     }
 
-    protected function exportParentTitleInformation(): void
+    protected function exportParentTitleInformation() : void
     {
-        foreach ($this->getLanguages() as $language) {
+        foreach ($this->getLanguages() as $language)
+        {
             $store = $this->getConfig()->getStore($language);
-            $storeId = $store->getId();
-            $store = null;
+            $storeId = $store->getId(); $store = null;
 
             $fetchedResult = $this->exporterResource->getParentTitleInformationByStore($storeId);
-            if (sizeof($fetchedResult)) {
-                foreach ($fetchedResult as $r) {
-                    if (isset($data[$r['entity_id']])) {
-                        if (isset($data[$r['entity_id']]['value_' . $language])) {
-                            if ($r['store_id'] > 0) {
+            if (sizeof($fetchedResult))
+            {
+                foreach ($fetchedResult as $r)
+                {
+                    if (isset($data[$r['entity_id']]))
+                    {
+                        if(isset($data[$r['entity_id']]['value_' . $language]))
+                        {
+                            if($r['store_id'] > 0){
                                 $data[$r['entity_id']]['value_' . $language] = $r['value'];
                             }
                         } else {
@@ -683,9 +749,11 @@ class Product extends Base
                 $fetchedResult = null;
 
                 $duplicateResult = $this->exporterResource->getParentTitleInformationByStoreAndDuplicateIds($storeId, $this->duplicateIds);
-                foreach ($duplicateResult as $r) {
-                    $r['entity_id'] = 'duplicate' . $r['entity_id'];
-                    if (isset($data[$r['entity_id']])) {
+                foreach ($duplicateResult as $r)
+                {
+                    $r['entity_id'] = 'duplicate'.$r['entity_id'];
+                    if (isset($data[$r['entity_id']]))
+                    {
                         $data[$r['entity_id']]['value_' . $language] = $r['value'];
                         continue;
                     }
@@ -699,17 +767,18 @@ class Product extends Base
 
         $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_bx_parent_title.csv'), 'entity_id');
         $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey, 'bx_parent_title', $this->getLanguageHeaders());
-        $this->getLibrary()->addFieldParameter($attributeSourceKey, 'bx_parent_title', 'multiValued', 'false');
+        $this->getLibrary()->addFieldParameter($attributeSourceKey,'bx_parent_title', 'multiValued', 'false');
     }
 
     /**
      * @throws \Exception
      */
-    public function exportCategoriesInformation(): void
+    public function exportCategoriesInformation() : void
     {
         $this->getLogger()->info("Boxalino Exporter: CATEGORIES prepare export for each language of the account: $this->account");
         $categories = [];
-        foreach ($this->getLanguages() as $language) {
+        foreach ($this->getLanguages() as $language)
+        {
             $store = $this->getConfig()->getStore($language);
             $this->getLogger()->info("Boxalino Exporter: CATEGORIES START exportCategories for LANGUAGE $language on store:" . $store->getId());
             $categories = $this->exportCategoriesByStoreLanguage($store, $language, $categories);
@@ -973,5 +1042,6 @@ class Product extends Base
 
         return $text;
     }
+
 
 }
