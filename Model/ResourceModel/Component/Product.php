@@ -623,7 +623,6 @@ class Product  extends Base
                 ["entity_select" => new \Zend_Db_Expr("( ". $select->__toString() . " )")],
                 [
                     "entity_select.entity_id",
-                    "store_id" => "entity_select.entity_store_id",
                     "value" => new \Zend_Db_Expr("
                         (CASE
                             WHEN entity_select.parent_id IS NULL THEN entity_select.entity_value
