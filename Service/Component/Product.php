@@ -575,7 +575,7 @@ class Product extends Base
     {
         $this->getLogger()->info('Boxalino Exporter: PRODUCT INFORMATION START for account ' . $this->account);
         $this->exportStockInformation();
-        $this->_exportSeoUrlInformationByTypeName("getParentSeoUrlInformationByStoreId", "parent_url_key");
+        $this->_exportSeoUrlInformationByTypeName("getParentSeoUrlInformationByStoreId", "di_parent_url_key");
         $this->exportWebsiteInformation();
         $this->exportParentCategoriesInformation();
         $this->exportSuperLinkInformation();
