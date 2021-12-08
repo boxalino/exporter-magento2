@@ -288,6 +288,10 @@ class ContentLibrary
         $this->addSourceField($sourceKey, $fieldName, "number", false, $col, $referenceSourceKey, $validate);
     }
 
+    public function addSourceLocalizedNumberField($sourceKey, $fieldName, $col, $referenceSourceKey=null, $validate=true) {
+        $this->addSourceField($sourceKey, $fieldName, "number", true, $col, $referenceSourceKey, $validate);
+    }
+
     public function setCategoryField($sourceKey, $col, $referenceSourceKey="resource_categories", $validate=true) {
         if($referenceSourceKey == "resource_categories") {
             list($container, $sourceId) = $this->decodeSourceKey($sourceKey);

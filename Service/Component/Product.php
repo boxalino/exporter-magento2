@@ -582,6 +582,7 @@ class Product extends Base
         $this->exportLinkInformation();
         $this->exportParentTitleInformation();
         $this->exportCategoriesInformation();
+        $this->exportRatingsPercent();
         $this->getLogger()->info("Boxalino Exporter: PRODUCT INFORMATION FINISHED");
     }
 
@@ -828,6 +829,53 @@ class Product extends Base
 
             $this->_addDataToFile($filename, $data);
             $this->_addIndexedPriceConfigurations($filename, $attributeCode);
+        }
+    }
+
+    /**
+     * Exports configured rating codes on the eshop
+     *
+     * @return void
+     * @throws \Exception
+     */
+    public function exportRatingsPercent() : void
+    {
+        $storeIds = array_map(function($language) { return (int)$this->getConfig()->getStore($language)->getId(); }, $this->getLanguages());
+        $enabledRatingsOnStores = $this->exporterResource->getEnabledRatingTitlesByStoreIds($storeIds);
+        foreach($enabledRatingsOnStores as $ratingId => $ratingCode)
+        {
+            $attrCode = "rating_". strtolower($ratingCode) . "_percent";
+            $fileName = "products_{$attrCode}.csv";
+
+            foreach ($this->getLanguages() as $language)
+            {
+                $store = $this->getConfig()->getStore($language);
+                $storeId = $store->getId(); $store = null;
+
+                $fetchedResult = $this->exporterResource->getRatingPercentByRatingTypeStoreId((int)$ratingId, $storeId);
+                if (sizeof($fetchedResult))
+                {
+                    foreach ($fetchedResult as $r)
+                    {
+                        if (isset($data[$r['entity_id']]))
+                        {
+                            $data[$r['entity_id']]['value_' . $language] = $r['value'];
+                            continue;
+                        }
+                        $data[$r['entity_id']] = [
+                            'entity_id' => $r['entity_id'],
+                            'value_' . $language => $r['value']
+                        ];
+                    }
+                }
+            }
+
+            $data = array_merge(array(array_keys(end($data))), $data);
+            $this->getFiles()->savePartToCsv($fileName, $data);
+
+            $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath($fileName), 'entity_id');
+            $this->getLibrary()->addSourceLocalizedNumberField($attributeSourceKey, $attrCode, $this->getLanguageHeaders());
+            $this->getLibrary()->addFieldParameter($attributeSourceKey,$attrCode, 'multiValued', 'false');
         }
     }
 

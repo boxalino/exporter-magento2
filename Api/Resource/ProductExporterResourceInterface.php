@@ -157,6 +157,19 @@ interface ProductExporterResourceInterface extends BaseExporterResourceInterface
     public function getIndexedPrice(string $type, int $websiteId) : array;
 
     /**
+     * @param string $type
+     * @param int $websiteId
+     * @return array
+     */
+    public function getRatingPercentByRatingTypeStoreId(int $ratingId, int $storeId) : array;
+
+    /**
+     * @param array $storeIds
+     * @return array
+     */
+    public function getEnabledRatingTitlesByStoreIds(array $storeIds) : array;
+
+    /**
      * @param $storeId
      * @param $key
      * @return mixed

@@ -850,6 +850,92 @@ class Product  extends Base
     }
 
     /**
+     * For child product - set the parent rating (if its own value does not exist)
+     * @param int $storeId
+     * @return array
+     */
+    public function getRatingPercentByRatingTypeStoreId(int $ratingId, int $storeId) : array
+    {
+        $ratingSelect = $this->_getRatingSelectByRatingTypeStoreId($ratingId, $storeId);
+        $select = $this->adapter->select()
+            ->from(
+                ['c_p_e' => $this->adapter->getTableName('catalog_product_entity')],
+                [
+                    'c_p_e.entity_id',
+                    'value' => new \Zend_Db_Expr("CASE WHEN r_o_v_a_e.value IS NULL THEN r_o_v_a_p.value ELSE r_o_v_a_e.value END")
+                ]
+            )
+            ->joinLeft(
+                ['c_p_r' => $this->adapter->getTableName('catalog_product_relation')],
+                'c_p_e.entity_id = c_p_r.child_id',
+                []
+            )
+            ->joinLeft(
+                ["r_o_v_a_e"=>new \Zend_Db_Expr("( " . $ratingSelect->__toString() . " )")],
+                "r_o_v_a_e.entity_id = c_p_e.entity_id",
+                []
+            )
+            ->joinLeft(
+                ["r_o_v_a_p"=>new \Zend_Db_Expr("( " . $ratingSelect->__toString() . " )")],
+                "r_o_v_a_p.entity_id = c_p_r.parent_id",
+                []
+            );
+
+        if(!empty($this->exportIds) && $this->isDelta)
+        {
+            $select->where('c_p_e.entity_id IN(?)', $this->exportIds);
+        }
+
+        return $this->adapter->fetchAll($select);
+    }
+
+    /**
+     * @param int $ratingId
+     * @param int $storeId
+     * @return Select
+     */
+    protected function _getRatingSelectByRatingTypeStoreId(int $ratingId, int $storeId) : Select
+    {
+        return $this->adapter->select()
+            ->from(
+                ['r_o_v_a' => $this->adapter->getTableName('rating_option_vote_aggregated')],
+                [
+                    'value' => new \Zend_Db_Expr('IF(r_o_v_a_s.percent_approved IS NULL, r_o_v_a.percent_approved, r_o_v_a_s.percent_approved)'),
+                    'entity_id'=>'r_o_v_a.entity_pk_value'
+                ]
+            )
+            ->joinLeft(
+                ['r_o_v_a_s' => $this->adapter->getTableName('rating_option_vote_aggregated')],
+                "r_o_v_a_s.entity_pk_value = r_o_v_a.entity_pk_value AND r_o_v_a_s.store_id=$storeId",
+                []
+            )
+            ->where('r_o_v_a.store_id = 0');
+    }
+
+    /**
+     * @param array $storeIds
+     * @return array
+     */
+    public function getEnabledRatingTitlesByStoreIds(array $storeIds) : array
+    {
+        $enabledRatingsStores = array_merge([0], $storeIds);
+        $select = $this->adapter->select()
+            ->from(
+                ['r' => $this->adapter->getTableName('rating')],
+                ['rating_id', 'rating_code']
+            )
+            ->join(
+                ['r_s' => $this->adapter->getTableName('rating_store')],
+                "r_s.rating_id=r.rating_id",
+                []
+            )
+            ->where("r_s.store_id IN(?)", $enabledRatingsStores)
+            ->group("rating_id");
+
+        return $this->adapter->fetchPairs($select);
+    }
+
+    /**
      * Default function for accessing product attributes values
      * join them with default store
      * and make a selection on the store id
