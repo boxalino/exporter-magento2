@@ -807,12 +807,12 @@ class Product  extends Base
         $selectTwo->join(
             ['t_d' => $this->adapter->getTableName('catalog_product_entity_varchar')],
             't_d.entity_id = c_p_e.entity_id AND c_p_r.parent_id IS NULL',
-            [new \Zend_Db_Expr('LOWER(t_d.value) as value'), 't_d.store_id']
+            [new \Zend_Db_Expr('t_d.value as value'), 't_d.store_id']
         );
         $selectOne->join(
             ['t_d' => $this->adapter->getTableName('catalog_product_entity_varchar')],
             't_d.entity_id = c_p_r.parent_id',
-            [new \Zend_Db_Expr('LOWER(t_d.value) as value'), 't_d.store_id']
+            [new \Zend_Db_Expr('t_d.value as value'), 't_d.store_id']
         );
 
         $select = $this->adapter->select()

@@ -4,7 +4,10 @@ namespace Boxalino\Exporter\Service\Component;
 use Boxalino\Exporter\Api\Resource\BaseExporterResourceInterface;
 use Boxalino\Exporter\Api\Component\ProductExporterInterface;
 use Boxalino\Exporter\Api\Resource\ProductExporterResourceInterface;
+use Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\ProductMetadata;
+use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
 use \Psr\Log\LoggerInterface;
 
@@ -45,6 +48,38 @@ class Product extends Base
     protected $languages = [];
 
     /**
+     * @var ScopeConfigInterface
+     */
+    protected $scopeConfig;
+
+    /**
+     * Cache for product rewrite suffix
+     *
+     * @var array
+     */
+    protected $productUrlSuffix = [];
+
+    /**
+     * @var array
+     */
+    protected $storeBaseUrl = [];
+
+    /**
+     * @var array
+     */
+    protected $imageBaseUrl = [];
+
+    /**
+     * @var array
+     */
+    protected $storeIdsMap = [];
+
+    /**
+     * @var string | null
+     */
+    protected $suffix;
+
+    /**
      * Product constructor.
      *
      * @param LoggerInterface $logger
@@ -56,10 +91,12 @@ class Product extends Base
         LoggerInterface $logger,
         BaseExporterResourceInterface $baseResource,
         \Magento\Framework\App\ResourceConnection $rs,
-        ProductExporterResourceInterface $exporterResource
+        ProductExporterResourceInterface $exporterResource,
+        ScopeConfigInterface $scopeConfig
     ){
         parent::__construct($logger, $baseResource);
         $this->exporterResource = $exporterResource;
+        $this->scopeConfig = $scopeConfig;
         $this->rs = $rs;
     }
 
@@ -156,6 +193,7 @@ class Product extends Base
     protected function exportAttributes(array $attrs = []) : void
     {
         $this->getLogger()->info('Boxalino Exporter: PRODUCT - exportProductAttributes for account ' . $this->account);
+        $this->loadPathDetails();
         $paramPriceLabel = '';
         $paramSpecialPriceLabel = '';
 
@@ -190,12 +228,10 @@ class Product extends Base
                     if($this->isDelta()) $select->where('t_d.entity_id IN(?)', $this->getDeltaIds());
 
                     $labelColumns[$lang] = 'value_' . $lang;
-                    $storeObject = $this->getConfig()->getStore($lang);
-                    $storeId = $storeObject->getId();
-
-                    $storeBaseUrl = $storeObject->getBaseUrl();
-                    $imageBaseUrl = $storeObject->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . "catalog/product";
-                    $storeObject = null;
+                    $storeId = $this->getStoreId($lang);
+                    $storeBaseUrl = $this->getStoreBaseUrl($lang);
+                    $imageBaseUrl = $this->getImageBaseUrl($lang);
+                    $productUrlSuffix = $this->getProductUrlSuffix($lang);
 
                     if ($type['attribute_code'] == 'price'|| $type['attribute_code'] == 'special_price')
                     {
@@ -253,7 +289,7 @@ class Product extends Base
                             {
                                 if(isset($data[$row['entity_id']]['value_' . $lang]))
                                 {
-                                    if($row['store_id'] > 0){
+                                    if($row['store_id'] > 0) {
                                         $data[$row['entity_id']]['value_' . $lang] = $row['value'];
                                         if(isset($this->duplicateIds[$row['entity_id']])) {
                                             $data['duplicate'.$row['entity_id']]['value_' . $lang] = $getValueForDuplicate ?
@@ -262,7 +298,7 @@ class Product extends Base
                                         }
                                         if(isset($additionalData[$row['entity_id']])) {
                                             if ($type['attribute_code'] == 'url_key') {
-                                                $url = $storeBaseUrl . $row['value'] . '.html';
+                                                $url = $storeBaseUrl . $row['value'] . $productUrlSuffix;
                                             } else {
                                                 $url = $imageBaseUrl . $row['value'];
                                             }
@@ -281,7 +317,7 @@ class Product extends Base
                                     }
                                     if (isset($additionalData[$row['entity_id']])) {
                                         if ($type['attribute_code'] == 'url_key') {
-                                            $url = $storeBaseUrl . $row['value'] . '.html';
+                                            $url = $storeBaseUrl . $row['value'] . $productUrlSuffix;
                                         } else {
                                             $url = $imageBaseUrl . $row['value'];
                                         }
@@ -296,7 +332,7 @@ class Product extends Base
                                 if ($type['attribute_code'] == 'url_key') {
                                     if ($this->getConfig()->exportProductUrl())
                                     {
-                                        $url = $storeBaseUrl . $row['value'] . '.html';
+                                        $url = $storeBaseUrl . $row['value'] . $productUrlSuffix;
                                         $additionalData[$row['entity_id']] = [
                                             'entity_id' => $row['entity_id'],
                                             'store_id' => $row['store_id'],
@@ -416,7 +452,7 @@ class Product extends Base
                     }
                 }
 
-                if($optionSelect || $exportAttribute){
+                if($optionSelect || $exportAttribute) {
                     $optionHeader = array_merge(array($type['attribute_code'] . '_id'), $labelColumns);
                     $a = array_merge(array($optionHeader), $optionValues);
                     $this->getFiles()->savepartToCsv( $type['attribute_code'].'.csv', $a);
@@ -483,6 +519,7 @@ class Product extends Base
                         case $optionSelect == true:
                             $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey,$type['attribute_code'],
                                 $type['attribute_code'] . '_id', $optionSourceKey);
+                            $this->_addFacetValueExtraInfo($attributeSourceKey, $type['attribute_code']);
                             break;
                         case 'name':
                             $this->getLibrary()->addSourceTitleField($attributeSourceKey, $labelColumns);
@@ -574,6 +611,7 @@ class Product extends Base
     protected function exportInformation()
     {
         $this->getLogger()->info('Boxalino Exporter: PRODUCT INFORMATION START for account ' . $this->account);
+
         $this->exportStockInformation();
         $this->_exportSeoUrlInformationByTypeName("getParentSeoUrlInformationByStoreId", "di_parent_url_key");
         $this->exportWebsiteInformation();
@@ -583,7 +621,18 @@ class Product extends Base
         $this->exportParentTitleInformation();
         $this->exportCategoriesInformation();
         $this->exportRatingsPercent();
+
         $this->getLogger()->info("Boxalino Exporter: PRODUCT INFORMATION FINISHED");
+    }
+
+    protected function test() : void
+    {
+        $content = $this->exporterResource->fetch();
+        foreach($content as $productId => $data)
+        {
+            $this->logger->info($productId);
+            $this->logger->info(json_encode($data));
+        }
     }
 
     protected function exportStockInformation() : void
@@ -617,8 +666,7 @@ class Product extends Base
         $db = $this->rs->getConnection();
         foreach ($this->getLanguages() as $language)
         {
-            $store = $this->getConfig()->getStore($language);
-            $storeId = $store->getId(); $store = null;
+            $storeId = $this->getStoreId($language);
 
             $query = $this->exporterResource->$type($storeId);
             $fetchedResult = $db->fetchAll($query);
@@ -725,8 +773,7 @@ class Product extends Base
     {
         foreach ($this->getLanguages() as $language)
         {
-            $store = $this->getConfig()->getStore($language);
-            $storeId = $store->getId(); $store = null;
+            $storeId = $this->getStoreId($language);
 
             $fetchedResult = $this->exporterResource->getParentTitleInformationByStore($storeId);
             if (sizeof($fetchedResult))
@@ -808,7 +855,6 @@ class Product extends Base
 
         foreach ($customerGroupIds as $customerGroupId)
         {
-            $this->logger->warning($customerGroupId);
             list($attributeCode, $filename) = $this->_getIndexedPriceAttributeCodeFileNameByTypeCustomerGroup($type, $customerGroupId);
 
             try {
@@ -849,8 +895,7 @@ class Product extends Base
 
             foreach ($this->getLanguages() as $language)
             {
-                $store = $this->getConfig()->getStore($language);
-                $storeId = $store->getId(); $store = null;
+                $storeId = $this->getStoreId($language);
 
                 $fetchedResult = $this->exporterResource->getRatingPercentByRatingTypeStoreId((int)$ratingId, $storeId);
                 if (sizeof($fetchedResult))
@@ -916,6 +961,26 @@ class Product extends Base
         $this->getLibrary()->addSourceNumberField($attributeSourceKey, $attributeCode, "value");
         $this->getLibrary()->addFieldParameter($attributeSourceKey, $attributeCode, 'multiValued', 'false');
         $this->getLibrary()->addResourceFile($this->getFiles()->getPath($filename), "entity_id", "value");
+    }
+
+    /**
+     * @param string $attributeSourceKey
+     * @param string $attributeCode
+     * @return void
+     * @throws \Exception
+     */
+    protected function _addFacetValueExtraInfo(string $attributeSourceKey, string $attributeCode) : void
+    {
+        $diAttributeCode = "products_" . $attributeCode;
+        $diAttributeOptionId = $attributeCode. "_id";
+        $query = [];
+        foreach($this->getLanguages() as $language)
+        {
+            $field = "value_" . $language;
+            $query[] = "SELECT 'facetValueExtraInfo' AS type, \"$diAttributeCode\" AS source, $field AS target, $diAttributeOptionId AS id FROM `%%EXTRACT_PROCESS_TABLE_BASE%%_products_resource_$attributeCode` GROUP BY $diAttributeOptionId";
+        }
+
+        $this->getLibrary()->addFieldParameter($attributeSourceKey, $attributeCode, 'facet_value_extra_info_sql', implode(" UNION ALL " , $query));
     }
 
     /**
@@ -1064,6 +1129,64 @@ class Product extends Base
     public function getLanguages() : array
     {
         return $this->languages;
+    }
+
+    /**
+     * @return void
+     * @throws \Exception
+     */
+    protected function loadPathDetails() : void
+    {
+        foreach ($this->getLanguages() as $langIndex => $lang)
+        {
+            $storeObject = $this->getConfig()->getStore($lang);
+            $this->storeBaseUrl[$lang] = $storeObject->getBaseUrl();
+            $this->storeIdsMap[$lang] = $storeObject->getId();
+            $this->imageBaseUrl[$lang] = $storeObject->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . "catalog/product";
+            $this->productUrlSuffix[$lang] = $this->scopeConfig->getValue(
+                ProductUrlPathGenerator::XML_PATH_PRODUCT_URL_SUFFIX,
+                ScopeInterface::SCOPE_STORE,
+                $storeObject->getId()
+            );
+        }
+    }
+
+    /**
+     * Retrieve product rewrite suffix for store
+     *
+     * @param string $language
+     * @return string|null
+     */
+    protected function getProductUrlSuffix(string $language) : ?string
+    {
+        return $this->productUrlSuffix[$language];
+    }
+
+    /**
+     * @param string $language
+     * @return string|null
+     */
+    protected function getStoreBaseUrl(string $language) : string
+    {
+        return $this->storeBaseUrl[$language];
+    }
+
+    /**
+     * @param string $language
+     * @return string|null
+     */
+    protected function getImageBaseUrl(string $language) : string
+    {
+        return $this->imageBaseUrl[$language];
+    }
+
+    /**
+     * @param string $language
+     * @return int
+     */
+    protected function getStoreId(string $language) : int
+    {
+        return $this->storeIdsMap[$language];
     }
 
     /**
