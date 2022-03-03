@@ -330,6 +330,14 @@ class Configuration
     }
 
     /**
+     * @return bool
+     */
+    public function exportFacetValueExtraInfo() : bool
+    {
+        return (bool) $this->getFirstAccountStore()->getConfig('boxalino_exporter/products/facetValueExtraInfo') == 1;
+    }
+
+    /**
      * @param $allProperties
      * @param $includes
      * @param $excludes

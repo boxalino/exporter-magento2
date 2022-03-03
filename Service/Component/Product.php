@@ -519,7 +519,7 @@ class Product extends Base
                         case $optionSelect == true:
                             $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey,$type['attribute_code'],
                                 $type['attribute_code'] . '_id', $optionSourceKey);
-                            $this->_addFacetValueExtraInfo($attributeSourceKey, $type['attribute_code']);
+                            $this->_addFacetValueExtraInfo($attributeSourceKey, $type['attribute_code'], 'product_' . $type['attribute_code'] . '.csv');
                             break;
                         case 'name':
                             $this->getLibrary()->addSourceTitleField($attributeSourceKey, $labelColumns);
@@ -966,21 +966,26 @@ class Product extends Base
     /**
      * @param string $attributeSourceKey
      * @param string $attributeCode
+     * @param string $fileName
      * @return void
      * @throws \Exception
      */
-    protected function _addFacetValueExtraInfo(string $attributeSourceKey, string $attributeCode) : void
+    protected function _addFacetValueExtraInfo(string $attributeSourceKey, string $attributeCode, string $fileName) : void
     {
-        $diAttributeCode = "products_" . $attributeCode;
-        $diAttributeOptionId = $attributeCode. "_id";
-        $query = [];
-        foreach($this->getLanguages() as $language)
+        if($this->config->exportFacetValueExtraInfo())
         {
-            $field = "value_" . $language;
-            $query[] = "SELECT 'facetValueExtraInfo' AS type, \"$diAttributeCode\" AS source, $field AS target, $diAttributeOptionId AS id FROM `%%EXTRACT_PROCESS_TABLE_BASE%%_products_resource_$attributeCode` GROUP BY $diAttributeOptionId";
-        }
+            $diAttributeCode = "products_" . $attributeCode;
+            $resourceName = "resource_" . $this->getLibrary()->getSourceIdFromFileNameFromPath($this->getFiles()->getPath($fileName), "products", 14, true);
+            $diAttributeOptionId = $attributeCode. "_id";
+            $query = [];
+            foreach($this->getLanguages() as $language)
+            {
+                $field = "value_" . $language;
+                $query[] = "SELECT 'facetValueExtraInfo' AS type, \"$diAttributeCode\" AS source, $field AS target, $diAttributeOptionId AS id FROM `%%EXTRACT_PROCESS_TABLE_BASE%%_products_$resourceName` GROUP BY $diAttributeOptionId";
+            }
 
-        $this->getLibrary()->addFieldParameter($attributeSourceKey, $attributeCode, 'facet_value_extra_info_sql', implode(" UNION ALL " , $query));
+            $this->getLibrary()->addFieldParameter($attributeSourceKey, $attributeCode, 'facet_value_extra_info_sql', implode(" UNION ALL " , $query));
+        }
     }
 
     /**
