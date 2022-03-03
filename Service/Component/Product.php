@@ -519,7 +519,7 @@ class Product extends Base
                         case $optionSelect == true:
                             $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey,$type['attribute_code'],
                                 $type['attribute_code'] . '_id', $optionSourceKey);
-                            $this->_addFacetValueExtraInfo($attributeSourceKey, $type['attribute_code'], 'product_' . $type['attribute_code'] . '.csv');
+                            $this->_addFacetValueExtraInfo($attributeSourceKey, $type['attribute_code'],$type['attribute_code'] . '.csv');
                             break;
                         case 'name':
                             $this->getLibrary()->addSourceTitleField($attributeSourceKey, $labelColumns);
@@ -974,8 +974,8 @@ class Product extends Base
     {
         if($this->config->exportFacetValueExtraInfo())
         {
-            $diAttributeCode = "products_" . $attributeCode;
-            $resourceName = "resource_" . $this->getLibrary()->getSourceIdFromFileNameFromPath($this->getFiles()->getPath($fileName), "products", 14, true);
+            $diAttributeCode = self::EXPORTER_COMPONENT_TYPE . "_" . $attributeCode;
+            $resourceName = "resource_" . $this->getLibrary()->getSourceIdFromFileNameFromPath($this->getFiles()->getPath($fileName), self::EXPORTER_COMPONENT_TYPE, 14, true);
             $diAttributeOptionId = $attributeCode. "_id";
             $query = [];
             foreach($this->getLanguages() as $language)
