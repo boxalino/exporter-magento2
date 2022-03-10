@@ -40,7 +40,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
     public function addExporterTable(SchemaSetupInterface $installer)
     {
-        if (!$installer->tableExists('boxalino_export')) {
+        if (!$installer->tableExists('boxalino_exporter')) {
             $table = $installer->getConnection()->newTable(
                 $installer->getTable('boxalino_exporter')
             )->addColumn(
@@ -73,7 +73,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 ['nullable' => true],
                 'Updated at'
             )->addIndex(
-                $installer->getIdxName('boxalino_export', ['indexer_id']),
+                $installer->getIdxName('boxalino_exporter', ['indexer_id']),
                 ['indexer_id'],
                 ['type'=> AdapterInterface::INDEX_TYPE_UNIQUE]
             )->setComment('Boxalino Exports Time tracker');
