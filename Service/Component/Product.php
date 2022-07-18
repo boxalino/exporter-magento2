@@ -519,7 +519,7 @@ class Product extends Base
                         case $optionSelect == true:
                             $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey,$type['attribute_code'],
                                 $type['attribute_code'] . '_id', $optionSourceKey);
-                            $this->_addFacetValueExtraInfo($attributeSourceKey, $type['attribute_code'],$type['attribute_code'] . '.csv');
+                            $this->_addFacetValueExtraInfo($attributeSourceKey, $type['attribute_code'], $type['attribute_code'] . '.csv');
                             break;
                         case 'name':
                             $this->getLibrary()->addSourceTitleField($attributeSourceKey, $labelColumns);

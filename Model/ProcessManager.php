@@ -225,13 +225,15 @@ abstract class ProcessManager
     }
 
     /**
+     * When IDs are added from MVIEW - other affected IDs must be included
+     *
      * @param array $ids
      * @return $this
      */
     public function setIds(array $ids)
     {
         $ids = array_unique($ids) ?? [];
-        $this->ids = $this->addParentChildMatchToIds($ids);
+        $this->ids = $this->addAffectedIds($ids);
 
         return $this;
     }
@@ -240,15 +242,15 @@ abstract class ProcessManager
      * @param array $ids
      * @return array
      */
-    protected function addParentChildMatchToIds(array $ids) : array
+    protected function addAffectedIds(array $ids) : array
     {
         if(empty($ids))
         {
             return $ids;
         }
 
-        $updatedWithParentChildMatches = $this->processResource->getChildParentIds($ids);
-        return array_unique(array_merge(array_column($updatedWithParentChildMatches, "entity_id"), $ids));
+        $updatedWithParentChildMatches = $this->processResource->getAffectedEntityIdsByIds($ids);
+        return array_unique(array_merge($updatedWithParentChildMatches, $ids));
     }
 
     abstract function getTimeout() : int;
