@@ -263,6 +263,48 @@ class Product  extends Base
     }
 
     /**
+     * @param string $type
+     * @param int $websiteId
+     * @return array
+     */
+    public function getGroupedIndexedPrice(string $type, int $websiteId): array
+    {
+        $groupSelect = $this->adapter->select()
+            ->from(
+                array('c_p_i' => $this->adapter->getTableName('catalog_product_index_price')),
+                ['entity_id', 'value' => $type . "_price"]
+            )
+            ->where('website_id=?', $websiteId)
+            ->group(['entity_id']);
+
+        $relationSelect = $this->adapter->select()
+            ->from(
+                ['e' => $this->adapter->getTableName('catalog_product_entity')],
+                ["e.entity_id", "group_id" => new \Zend_Db_Expr("IF (p_r.parent_id IS NULL, e.entity_id, p_r.parent_id)")]
+            )
+            ->joinLeft(
+                ['p_r' => $this->adapter->getTableName('catalog_product_relation')],
+                'e.entity_id = p_r.child_id', []
+            );
+
+        $select = $this->adapter->select()
+            ->from(
+                ['e_r' => new \Zend_Db_Expr("( " . $relationSelect->__toString() . ")")],
+                ['e_r.entity_id']
+            )
+            ->joinLeft(
+                ['c_p_i_g' => new \Zend_Db_Expr("( " . $groupSelect->__toString() . ")")],
+                "e_r.group_id = c_p_i_g.entity_id", ['c_p_i_g.value']
+            );
+
+        if (!empty($this->exportIds) && $this->isDelta) {
+            $select->where('e_r.entity_id IN(?)', $this->exportIds);
+        }
+
+        return $this->adapter->fetchAll($select);
+    }
+
+    /**
      * @param int $websiteId
      * @return array
      */
@@ -298,6 +340,51 @@ class Product  extends Base
         if(!empty($this->exportIds) && $this->isDelta)
         {
             $select->where('c_p_i.entity_id IN(?)', $this->exportIds);
+        }
+
+        return $this->adapter->fetchAll($select);
+    }
+
+    /**
+     * @param string $type
+     * @param int $websiteId
+     * @param string $customerGroupId
+     * @return array
+     */
+    public function getGroupedIndexedPriceForCustomerGroup(string $type, int $websiteId, string $customerGroupId) : array
+    {
+        $groupSelect = $this->adapter->select()
+            ->from(
+                array('c_p_i' => $this->adapter->getTableName('catalog_product_index_price')),
+                ['entity_id', 'value'=> $type . "_price"]
+            )
+            ->where('website_id = ?', $websiteId)
+            ->where('customer_group_id = ?', $customerGroupId)
+            ->group(['entity_id']);
+
+        $relationSelect = $this->adapter->select()
+            ->from(
+                ['e' => $this->adapter->getTableName('catalog_product_entity')],
+                ["e.entity_id", "group_id" => new \Zend_Db_Expr("IF (p_r.parent_id IS NULL, e.entity_id, p_r.parent_id)")]
+            )
+            ->joinLeft(
+                ['p_r' => $this->adapter->getTableName('catalog_product_relation')],
+                'e.entity_id = p_r.child_id', []
+            );
+
+        $select = $this->adapter->select()
+            ->from(
+                ['e_r' => new \Zend_Db_Expr("( " . $relationSelect->__toString() . ")")],
+                ['e_r.entity_id']
+            )
+            ->joinLeft(
+                ['c_p_i_g' => new \Zend_Db_Expr("( " . $groupSelect->__toString() . ")")],
+                "e_r.group_id = c_p_i_g.entity_id", ['c_p_i_g.value']
+            );
+
+        if(!empty($this->exportIds) && $this->isDelta)
+        {
+            $select->where('e_r.entity_id IN(?)', $this->exportIds);
         }
 
         return $this->adapter->fetchAll($select);

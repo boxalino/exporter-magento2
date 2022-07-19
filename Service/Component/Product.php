@@ -601,6 +601,8 @@ class Product extends Base
 
         $this->exportIndexedPrices("final");
         $this->exportIndexedPrices("min");
+        $this->exportGroupedIndexedPrices("min");
+        $this->exportGroupedIndexedPrices("max");
 
         $this->getFiles()->clearEmptyFiles("product_");
     }
@@ -879,6 +881,44 @@ class Product extends Base
     }
 
     /**
+     * Export content as is defined in the Magento2 price indexed table (per group)
+     *
+     * @param string $type
+     */
+    public function exportGroupedIndexedPrices(string $type): void
+    {
+        $customerGroupIds = array_merge(
+            $this->exporterResource->getDistinctCustomerGroupIdsForPriceByWebsiteId($this->getConfig()->getWebsiteId()),
+            [null]
+        );
+
+        foreach ($customerGroupIds as $customerGroupId)
+        {
+            list($attributeCode, $filename) = $this->_getIndexedPriceAttributeCodeFileNameByTypeCustomerGroup($type, $customerGroupId, true);
+
+            try {
+                if(is_null($customerGroupId))
+                {
+                    $data = $this->exporterResource->getGroupedIndexedPrice($type, $this->getConfig()->getWebsiteId());
+                } else {
+                    $data = $this->exporterResource->getGroupedIndexedPriceForCustomerGroup($type, $this->getConfig()->getWebsiteId(), $customerGroupId);
+                }
+
+                if (empty($data)) {
+                    $data = [["entity_id" => "", "value" => ""]];
+                }
+            } catch (\Throwable $exception) {
+                $this->logger->warning("Boxalino Exporter: Indexed price by customer group ID export error: " . $exception->getMessage());
+                $data = [["entity_id" => "", "value" => ""]];
+            }
+
+            $this->_addDataToFile($filename, $data);
+            $this->_addIndexedPriceConfigurations($filename, $attributeCode);
+        }
+    }
+
+
+    /**
      * Exports configured rating codes on the eshop
      *
      * @return void
@@ -927,11 +967,15 @@ class Product extends Base
     /**
      * @param string $type
      * @param string|null $customerGroupId
+     * @param bool $grouped
      * @return string[]
      */
-    protected function _getIndexedPriceAttributeCodeFileNameByTypeCustomerGroup(string $type, string $customerGroupId = null): array
+    protected function _getIndexedPriceAttributeCodeFileNameByTypeCustomerGroup(string $type, string $customerGroupId = null, bool $grouped=false): array
     {
         $attributeCode = $type . "_price_index";
+        if($grouped){
+            $attributeCode .= "_grouped";
+        }
         if (!is_null($customerGroupId)) {
             $attributeCode .= "_" . $customerGroupId;
         }
