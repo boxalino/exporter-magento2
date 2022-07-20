@@ -1004,7 +1004,7 @@ class Product  extends Base
             ->from(
                 ['r_o_v_a' => $this->adapter->getTableName('rating_option_vote_aggregated')],
                 [
-                    'value' => 'r_o_v_a_s.percent_approved',
+                    'value' => 'r_o_v_a.percent_approved',
                     'entity_id'=>'r_o_v_a.entity_pk_value'
                 ]
             )
