@@ -941,9 +941,9 @@ class Product  extends Base
      * @param int $storeId
      * @return array
      */
-    public function getRatingPercentByRatingTypeStoreId(int $ratingId, int $storeId) : array
+    public function getRatingPercentByRatingTypeStoreId(int $ratingId, int $storeId, bool $defaultToBaseStoreView = true) : array
     {
-        $ratingSelect = $this->_getRatingSelectByRatingTypeStoreId($ratingId, $storeId);
+        $ratingSelect = $this->_getRatingSelectByRatingTypeStoreId($storeId, $defaultToBaseStoreView);
         $select = $this->adapter->select()
             ->from(
                 ['c_p_e' => $this->adapter->getTableName('catalog_product_entity')],
@@ -977,26 +977,38 @@ class Product  extends Base
     }
 
     /**
-     * @param int $ratingId
      * @param int $storeId
      * @return Select
      */
-    protected function _getRatingSelectByRatingTypeStoreId(int $ratingId, int $storeId) : Select
+    protected function _getRatingSelectByRatingTypeStoreId(int $storeId, bool $defaultToBaseStoreView) : Select
     {
+        if($defaultToBaseStoreView)
+        {
+            return $this->adapter->select()
+                ->from(
+                    ['r_o_v_a' => $this->adapter->getTableName('rating_option_vote_aggregated')],
+                    [
+                        'value' => new \Zend_Db_Expr('IF(r_o_v_a_s.percent_approved IS NULL, r_o_v_a.percent_approved, r_o_v_a_s.percent_approved)'),
+                        'entity_id'=>'r_o_v_a.entity_pk_value'
+                    ]
+                )
+                ->joinLeft(
+                    ['r_o_v_a_s' => $this->adapter->getTableName('rating_option_vote_aggregated')],
+                    "r_o_v_a_s.entity_pk_value = r_o_v_a.entity_pk_value AND r_o_v_a_s.store_id=$storeId",
+                    []
+                )
+                ->where('r_o_v_a.store_id = 0');
+        }
+
         return $this->adapter->select()
             ->from(
                 ['r_o_v_a' => $this->adapter->getTableName('rating_option_vote_aggregated')],
                 [
-                    'value' => new \Zend_Db_Expr('IF(r_o_v_a_s.percent_approved IS NULL, r_o_v_a.percent_approved, r_o_v_a_s.percent_approved)'),
+                    'value' => 'r_o_v_a_s.percent_approved',
                     'entity_id'=>'r_o_v_a.entity_pk_value'
                 ]
             )
-            ->joinLeft(
-                ['r_o_v_a_s' => $this->adapter->getTableName('rating_option_vote_aggregated')],
-                "r_o_v_a_s.entity_pk_value = r_o_v_a.entity_pk_value AND r_o_v_a_s.store_id=$storeId",
-                []
-            )
-            ->where('r_o_v_a.store_id = 0');
+            ->where('r_o_v_a.store_id = ?', $storeId);
     }
 
     /**

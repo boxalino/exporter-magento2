@@ -324,6 +324,14 @@ class Configuration
     /**
      * @return bool
      */
+    public function exportRatingPerStoreViewOnly() : bool
+    {
+        return (bool) $this->getFirstAccountStore()->getConfig('boxalino_exporter/products/export_rating_storeview') == 1;
+    }
+
+    /**
+     * @return bool
+     */
     public function publishConfigurationChanges() : bool
     {
         return (bool) $this->getFirstAccountStore()->getConfig('boxalino_exporter/advanced/publish_configuration_changes') == 1;

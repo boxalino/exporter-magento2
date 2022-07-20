@@ -56,6 +56,11 @@
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
                     <comment>Optional: Export product urls (not required if standard usage of search and recommendations  in Magento, as Magento renders the url itself).. If activated, makes export slower.</comment>
                 </field>
+                <field id="export_rating_storeview" translate="label" type="select" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Use the base storeview as default</label>
+                    <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
+                    <comment>Optional: If activated, the ratings percent value will use the default from store_id=0 (for ex: a store view without rating will inherit the baseline from store id 0).</comment>
+                </field>
                 <field id="facetValueExtraInfo" translate="label" sortOrder="5" type="select" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Configure facetValueExtraInfo</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>

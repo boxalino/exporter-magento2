@@ -928,6 +928,7 @@ class Product extends Base
     {
         $storeIds = array_map(function($language) { return (int)$this->getConfig()->getStore($language)->getId(); }, $this->getLanguages());
         $enabledRatingsOnStores = $this->exporterResource->getEnabledRatingTitlesByStoreIds($storeIds);
+
         foreach($enabledRatingsOnStores as $ratingId => $ratingCode)
         {
             $attrCode = "rating_". strtolower($ratingCode) . "_percent";
@@ -937,7 +938,7 @@ class Product extends Base
             {
                 $storeId = $this->getStoreId($language);
 
-                $fetchedResult = $this->exporterResource->getRatingPercentByRatingTypeStoreId((int)$ratingId, $storeId);
+                $fetchedResult = $this->exporterResource->getRatingPercentByRatingTypeStoreId((int)$ratingId, $storeId, $this->getConfig()->exportRatingPerStoreViewOnly());
                 if (sizeof($fetchedResult))
                 {
                     foreach ($fetchedResult as $r)
@@ -959,7 +960,7 @@ class Product extends Base
             $this->getFiles()->savePartToCsv($fileName, $data);
 
             $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath($fileName), 'entity_id');
-            $this->getLibrary()->addSourceLocalizedNumberField($attributeSourceKey, $attrCode, $this->getLanguageHeaders());
+            $this->getLibrary()->addSourceLocalizedTextField($attributeSourceKey, $attrCode, $this->getLanguageHeaders());
             $this->getLibrary()->addFieldParameter($attributeSourceKey,$attrCode, 'multiValued', 'false');
         }
     }

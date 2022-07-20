@@ -166,9 +166,10 @@ interface ProductExporterResourceInterface extends BaseExporterResourceInterface
     /**
      * @param int $ratingId
      * @param int $storeId
+     * @param bool $defaultToBaseStoreView
      * @return array
      */
-    public function getRatingPercentByRatingTypeStoreId(int $ratingId, int $storeId) : array;
+    public function getRatingPercentByRatingTypeStoreId(int $ratingId, int $storeId, bool $defaultToBaseStoreView=true) : array;
 
     /**
      * @param array $storeIds
