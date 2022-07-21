@@ -3,7 +3,7 @@
     "description": "Boxalino Data Exporter for Magento2 plugin",
     "type": "magento2-module",
     "homepage": "http://www.boxalino.com",
-    "version": "2.5.10",
+    "version": "2.5.11",
     "keywords": ["boxalino", "exporter","magento"],
     "support": {
         "email": "support@boxalino.com"
