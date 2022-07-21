@@ -601,8 +601,8 @@ class Product extends Base
 
         $this->exportIndexedPrices("final");
         $this->exportIndexedPrices("min");
-        $this->exportGroupedIndexedPrices("min");
-        $this->exportGroupedIndexedPrices("max");
+//        $this->exportGroupedIndexedPrices("min");
+//        $this->exportGroupedIndexedPrices("max");
 
         $this->getFiles()->clearEmptyFiles("product_");
     }
