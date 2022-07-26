@@ -643,19 +643,49 @@ class Product extends Base
         $data = [];
         if(sizeof($information))
         {
-            foreach ($information as $r)
-            {
-                $data[] = array('entity_id'=>$r['entity_id'], 'qty'=>$r['qty']);
-                if(isset($this->duplicateIds[$r['entity_id']])){
-                    $data[] = array('entity_id'=>'duplicate'.$r['entity_id'], 'qty'=>$r['qty']);
-                }
-            }
-            $d = array_merge(array(array_keys(end($data))), $data);
-            $this->getFiles()->savePartToCsv('product_stock.csv', $d);
-
-            $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_stock.csv'), 'entity_id');
-            $this->getLibrary()->addSourceNumberField($attributeSourceKey, 'qty', 'qty');
+            $this->_exportStockQty($information);
+            $this->_exportStockStatus($information);
         }
+    }
+
+    /**
+     * @param array $information
+     * @return void
+     */
+    protected function _exportStockQty(array $information) : void
+    {
+        foreach ($information as $r)
+        {
+            $data[] = array('entity_id'=>$r['entity_id'], 'qty'=>$r['qty']);
+            if(isset($this->duplicateIds[$r['entity_id']])){
+                $data[] = array('entity_id'=>'duplicate'.$r['entity_id'], 'qty'=>$r['qty']);
+            }
+        }
+        $d = array_merge(array(array_keys(end($data))), $data);
+        $this->getFiles()->savePartToCsv('product_stock.csv', $d);
+
+        $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_stock.csv'), 'entity_id');
+        $this->getLibrary()->addSourceNumberField($attributeSourceKey, 'qty', 'qty');
+    }
+
+    /**
+     * @param array $information
+     * @return void
+     */
+    protected function _exportStockStatus(array $information)
+    {
+        foreach ($information as $r)
+        {
+            $data[] = array('entity_id'=>$r['entity_id'], 'status'=>(int)$r['stock_status']);
+            if(isset($this->duplicateIds[$r['entity_id']])){
+                $data[] = array('entity_id'=>'duplicate'.$r['entity_id'], 'status'=>(int)$r['stock_status']);
+            }
+        }
+        $d = array_merge(array(array_keys(end($data))), $data);
+        $this->getFiles()->savePartToCsv('product_stock_status.csv', $d);
+
+        $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_stock_status.csv'), 'entity_id');
+        $this->getLibrary()->addSourceNumberField($attributeSourceKey, 'stock_status', 'status');
     }
 
     /**
