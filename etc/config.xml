@@ -14,6 +14,7 @@
             <products>
                 <export_url>1</export_url>
                 <export_images>1</export_images>
+                <export_media_gallery>media_gallery</export_media_gallery>
                 <export_rating_storeview>1</export_rating_storeview>
                 <facetValueExtraInfo>0</facetValueExtraInfo>
             </products>

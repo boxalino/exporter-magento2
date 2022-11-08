@@ -623,6 +623,7 @@ class Product extends Base
         $this->exportParentTitleInformation();
         $this->exportCategoriesInformation();
         $this->exportRatingsPercent();
+        $this->exportMediaGalleryInformation();
 
         $this->getLogger()->info("Boxalino Exporter: PRODUCT INFORMATION FINISHED");
     }
@@ -871,6 +872,34 @@ class Product extends Base
         $this->getLibrary()->setCategoryField($productToCategoriesSourceKey, 'category_id');
 
         $this->getLogger()->info("Boxalino Exporter: CATEGORIES END.");
+    }
+
+    /**
+     * Exports all images linked to a product
+     * @return void
+     */
+    public function exportMediaGalleryInformation() : void
+    {
+        $information = $this->exporterResource->getMediaGalleryByAttributeCodeMediaPathWebsite(
+            $this->getConfig()->getAccountMediaGalleryAttributeCode(),
+            $this->imageBaseUrl[$this->getLanguages()[0]],
+            $this->getConfig()->getWebsiteId()
+        );
+        if(sizeof($information))
+        {
+            $data = $this->duplicate($information);
+            $d = array_merge(array(array_keys(end($data))), $data);
+
+            $this->getFiles()->savePartToCsv('product_media_gallery.csv', $d);
+
+            $propertyName = $this->sanitizeFieldName("media_gallery");
+            $attributeSourceKey = $this->getLibrary()->addCSVItemFile($this->getFiles()->getPath('product_media_gallery.csv'), 'entity_id');
+            $this->getLibrary()->addSourceStringField($attributeSourceKey, $propertyName, 'value');
+            $this->getLibrary()->addFieldParameter($attributeSourceKey, $propertyName, 'multiValued', 'true');
+            $this->getLibrary()->addFieldParameter($attributeSourceKey, $propertyName, 'splitValues', ',');
+        }
+
+        $this->getLogger()->info("Boxalino Exporter: MEDIA GALLERY IMAGES END.");
     }
 
     /**

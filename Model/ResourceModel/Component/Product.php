@@ -1113,6 +1113,82 @@ class Product  extends Base
         return $this->adapter->fetchAll($select);
     }
 
+
+    /**
+     * @param string $attributeCode
+     * @param string $mediaPath
+     * @param string $websiteId
+     * @return array
+     */
+    public function getMediaGalleryByAttributeCodeMediaPathWebsite(string $attributeCode, string $mediaPath, string $websiteId) : array
+    {
+        $attributeId = $this->getAttributeIdByAttributeCodeAndEntityType($attributeCode, \Magento\Catalog\Setup\CategorySetup::CATALOG_PRODUCT_ENTITY_TYPE_ID);
+        $mainEntitySelect = $this->_getEntityByWebsiteIdSelect($websiteId);
+        $mediaGalleryImageJoin = $this->_getMediaGalleryEntitySelect($attributeId);
+        $select = $this->adapter->select()
+            ->from(
+                ['c_p_e_s' => new \Zend_Db_Expr("( ". $mainEntitySelect->__toString() . ' )')],
+                [
+                    'c_p_e_s.entity_id',
+                    'value' => new \Zend_Db_Expr("GROUP_CONCAT(CONCAT('$mediaPath', IF(c_p_e_a_s.value IS NULL OR c_p_e_a_s.value = '', NULL, c_p_e_a_s.value)) SEPARATOR ',')")
+                ]
+            )
+            ->join(
+                ['c_p_e_a_s' => new \Zend_Db_Expr("( ". $mediaGalleryImageJoin->__toString() . ' )')],
+                "c_p_e_s.entity_id = c_p_e_a_s.entity_id",
+                []
+            )
+            ->where('c_p_e_a_s.entity_id IS NOT NULL')
+            ->group("c_p_e_s.entity_id");
+
+        return $this->adapter->fetchAll($select);
+    }
+
+    /**
+     * @param string $websiteId
+     * @return Select
+     */
+    protected function _getEntityByWebsiteIdSelect(string $websiteId): Select
+    {
+        $select =  $this->adapter->select()
+            ->from(
+                ['e' => $this->adapter->getTableName('catalog_product_entity')],
+                ["*"]
+            )
+            ->joinLeft(
+                ['c_p_w' => $this->adapter->getTableName('catalog_product_website')],
+                'e.entity_id = c_p_w.product_id AND c_p_w.website_id = ' . $websiteId,
+                []
+            )
+            ->where("c_p_w.website_id= ? " , $websiteId);
+
+        if(!empty($this->exportIds) && $this->isDelta)
+        {
+            $select->where('e.entity_id IN(?)', $this->exportIds);
+        }
+
+        return $select;
+    }
+
+    /**
+     * @param int $attributeId
+     * @return \Magento\Framework\DB\Select
+     */
+    protected function _getMediaGalleryEntitySelect(int $attributeId)
+    {
+        return $this->adapter->select()
+            ->from(
+                ['e' => $this->adapter->getTableName('catalog_product_entity_media_gallery_value_to_entity')],
+                ['e.entity_id', "c_p_e_m_g.value"]
+            )
+            ->joinLeft(
+                ['c_p_e_m_g' => $this->adapter->getTableName('catalog_product_entity_media_gallery')],
+                "c_p_e_m_g.value_id = e.value_id AND c_p_e_m_g.attribute_id= $attributeId AND c_p_e_m_g.media_type = 'image'",
+                []
+            )
+            ->where("c_p_e_m_g.value IS NOT NULL");
+    }
+
     /**
      * @param array $exportIds
      * @return $this

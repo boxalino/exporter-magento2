@@ -77,7 +77,7 @@ class Configuration
                     $this->indexConfig[$account][$language] = [
                         'website' => $website,
                         'group'   => $group,
-                        'store'   => $store,
+                        'store'   => $store
                     ];
                 }
             }
@@ -406,8 +406,7 @@ class Configuration
      */
     public function getAccountProductsProperties(array $allProperties, array $requiredProperties=[]) : array
     {
-        $includes = explode(',', $this->getFirstAccountStore()->getConfig('boxalino_exporter/products/include_properties'));
-        $excludes = explode(',', $this->getFirstAccountStore()->getConfig('boxalino_exporter/products/exclude_properties'));
+        list($includes, $excludes) = $this->getAccountProperties("products");
         return $this->getFinalProperties($allProperties, $includes, $excludes, $requiredProperties);
     }
 
@@ -419,8 +418,7 @@ class Configuration
      */
     public function getAccountCustomersProperties(array $allProperties, array $requiredProperties=[]) : array
     {
-        $includes = explode(',', $this->getFirstAccountStore()->getConfig('boxalino_exporter/customers/include_properties'));
-        $excludes = explode(',', $this->getFirstAccountStore()->getConfig('boxalino_exporter/customers/exclude_properties'));
+        list($includes, $excludes) = $this->getAccountProperties("customers");
         return $this->getFinalProperties($allProperties, $includes, $excludes, $requiredProperties);
     }
 
@@ -432,8 +430,7 @@ class Configuration
      */
     public function getAccountTransactionsProperties(array $allProperties, array $requiredProperties=[]) : array
     {
-        $includes = explode(',', $this->getFirstAccountStore()->getConfig('boxalino_exporter/transactions/include_properties'));
-        $excludes = explode(',', $this->getFirstAccountStore()->getConfig('boxalino_exporter/transactions/exclude_properties'));
+        list($includes, $excludes) = $this->getAccountProperties("transactions");
         return $this->getFinalProperties($allProperties, $includes, $excludes, $requiredProperties);
     }
 
@@ -455,5 +452,38 @@ class Configuration
 
         return [];
     }
+
+    /**
+     * @return string
+     */
+    public function getAccountMediaGalleryAttributeCode() : string
+    {
+        return $this->getFirstAccountStore()->getConfig('boxalino_exporter/products/export_media_gallery') ?? "media_gallery";
+    }
+
+    /**
+     * @param string $type
+     * @return array|void
+     * @throws \Exception
+     */
+    protected function getAccountProperties(string $type) : array
+    {
+        $includes = [];
+        $excludes = [];
+        $includeProperties = $this->getFirstAccountStore()->getConfig("boxalino_exporter/$type/include_properties");
+        $excludeProperties = $this->getFirstAccountStore()->getConfig("boxalino_exporter/$type/exclude_properties");
+
+        if(!is_null($includeProperties))
+        {
+            $includes = explode(",", $includeProperties);
+        }
+        if(!is_null($excludeProperties))
+        {
+            $excludes = explode(",", $excludeProperties);
+        }
+
+        return [$includes, $excludes];
+    }
+
 
 }
