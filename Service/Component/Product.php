@@ -621,9 +621,10 @@ class Product extends Base
         $this->exportSuperLinkInformation();
         $this->exportLinkInformation();
         $this->exportParentTitleInformation();
-        $this->exportCategoriesInformation();
+        $this->exportCategoriesName();
         $this->exportRatingsPercent();
         $this->exportMediaGalleryInformation();
+        $this->exportCategoriesAdditionalAttributes();
 
         $this->getLogger()->info("Boxalino Exporter: PRODUCT INFORMATION FINISHED");
     }
@@ -854,7 +855,7 @@ class Product extends Base
     /**
      * @throws \Exception
      */
-    public function exportCategoriesInformation() : void
+    public function exportCategoriesName() : void
     {
         $this->getLogger()->info("Boxalino Exporter: CATEGORIES prepare export for each language of the account: $this->account");
         $categories = [];
@@ -862,7 +863,7 @@ class Product extends Base
         {
             $store = $this->getConfig()->getStore($language);
             $this->getLogger()->info("Boxalino Exporter: CATEGORIES START exportCategories for LANGUAGE $language on store:" . $store->getId());
-            $categories = $this->exportCategoriesByStoreLanguage($store, $language, $categories);
+            $categories = $this->exportCategoriesByStoreLanguage($store, $language, $categories, 'name');
         }
         $categories = array_merge(array(array_keys(end($categories))), $categories);
         $this->getFiles()->savePartToCsv('categories.csv', $categories);
@@ -900,6 +901,28 @@ class Product extends Base
         }
 
         $this->getLogger()->info("Boxalino Exporter: MEDIA GALLERY IMAGES END.");
+    }
+
+    /**
+     * Exports all images linked to a product
+     * @return void
+     */
+    public function exportCategoriesAdditionalAttributes() : void
+    {
+        foreach($this->exporterResource->getCategoriesAttributes() as $attributeCode => $attributeId)
+        {
+            $categories = [];
+            foreach ($this->getLanguages() as $language)
+            {
+                $store = $this->getConfig()->getStore($language);
+                $categories = $this->exportCategoriesByStoreLanguage($store, $language, $categories, $attributeCode);
+            }
+            $fileName = "categories_$attributeCode.csv";
+            $this->_addDataToFile($fileName, $categories);
+            $this->getLibrary()->addExtraTableToEntity($this->getFiles()->getPath($fileName), $this->getComponent(), 'category_id', array_keys(end($categories)));
+        }
+
+        $this->getLogger()->info("Boxalino Exporter: CATEGORIES ADDITIONAL INFORMATION END.");
     }
 
     /**
@@ -1096,12 +1119,12 @@ class Product extends Base
      * @param Store $store
      * @param string $language
      * @param array $transformedCategories
-     * @return mixed
-     * @throws \Exception
+     * @param string $attributeCode
+     * @return array
      */
-    protected function exportCategoriesByStoreLanguage(Store $store, string $language, array $transformedCategories) : array
+    protected function exportCategoriesByStoreLanguage(Store $store, string $language, array $transformedCategories, string $attributeCode) : array
     {
-        $categories = $this->exporterResource->getCategoriesByStoreId($store->getId());
+        $categories = $this->exporterResource->getCategoriesAttributeByStoreId($store->getId(), $attributeCode);
         foreach($categories as $r)
         {
             if (!$r['parent_id'])  {

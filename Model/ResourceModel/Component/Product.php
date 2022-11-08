@@ -113,12 +113,48 @@ class Product  extends Base
     }
 
     /**
-     * @param int $storeId
+     * Get an array of attribute_id -> attribute_code
+     *
+     * @param string $type
      * @return array
      */
-    public function getCategoriesByStoreId(int $storeId): array
+    public function getCategoriesAttributes(string $type = 'varchar') : array
     {
-        $attributeId = $this->getAttributeIdByAttributeCodeAndEntityType('name', \Magento\Catalog\Setup\CategorySetup::CATEGORY_ENTITY_TYPE_ID);
+        $select = $this->adapter->select()
+            ->from(
+                ['c_v_i' => $this->adapter->getTableName('catalog_category_entity_' . $type)],
+                ['e_a.attribute_code', 'c_v_i.attribute_id']
+            )
+            ->joinLeft(
+                ['e_a' => $this->adapter->getTableName('eav_attribute')],
+                'e_a.attribute_id = c_v_i.attribute_id AND e_a.entity_type_id = ' . \Magento\Catalog\Setup\CategorySetup::CATEGORY_ENTITY_TYPE_ID,
+                []
+            )
+            ->group('c_v_i.attribute_id');
+
+        return $this->adapter->fetchPairs($select);
+    }
+
+    /**
+     * @param int $storeId
+     * @param string $attributeCode
+     * @return array
+     */
+    public function getCategoriesAttributeByStoreId(int $storeId, string $attributeCode): array
+    {
+        $attributeId = $this->getAttributeIdByAttributeCodeAndEntityType($attributeCode, \Magento\Catalog\Setup\CategorySetup::CATEGORY_ENTITY_TYPE_ID);
+        $select = $this->_getCategoryInformationByAttributeIdStoreIdSql($attributeId, $storeId);
+
+        return $this->adapter->fetchAll($select);
+    }
+
+    /**
+     * @param int $attributeId
+     * @param int $storeId
+     * @return Select
+     */
+    protected function _getCategoryInformationByAttributeIdStoreIdSql(int $attributeId, int $storeId) : Select
+    {
         $select = $this->adapter->select()
             ->from(
                 ['c_t' => $this->adapter->getTableName('catalog_category_entity')],
@@ -135,7 +171,7 @@ class Product  extends Base
                 ['c_v_l.value', 'c_v_l.store_id']
             );
 
-        $selectSql = $this->adapter->select()
+        return $this->adapter->select()
             ->from(
                 array('joins' => new \Zend_Db_Expr("( " . $select->__toString() . ")")),
                 array(
@@ -144,8 +180,6 @@ class Product  extends Base
                     new \Zend_Db_Expr("IF (joins.value IS NULL OR joins.value='', joins.value_default, joins.value ) AS value")
                 )
             );
-
-        return $this->adapter->fetchAll($selectSql);
     }
 
     /**

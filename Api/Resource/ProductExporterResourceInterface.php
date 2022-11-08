@@ -113,10 +113,11 @@ interface ProductExporterResourceInterface extends BaseExporterResourceInterface
     public function getParentCategoriesInformationByDuplicateIds(array $duplicateIds = []) : array;
 
     /**
-     * @param $storeId
+     * @param int $storeId
+     * @param string $attributeCode
      * @return array
      */
-    public function getCategoriesByStoreId(int $storeId): array;
+    public function getCategoriesAttributeByStoreId(int $storeId, string $attributeCode): array;
 
     /**
      * @return array
