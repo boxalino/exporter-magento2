@@ -2,6 +2,7 @@
 namespace Boxalino\Exporter\Model\ResourceModel\Component;
 
 use Boxalino\Exporter\Api\Resource\ProductExporterResourceInterface;
+use Magento\Catalog\Setup\CategorySetup;
 use Magento\Framework\App\ProductMetadata;
 use Magento\Framework\DB\Select;
 
@@ -155,6 +156,7 @@ class Product  extends Base
      */
     protected function _getCategoryInformationByAttributeIdStoreIdSql(int $attributeId, int $storeId) : Select
     {
+        $statusSql = $this->_getCategoriesStatusSql($storeId);
         $select = $this->adapter->select()
             ->from(
                 ['c_t' => $this->adapter->getTableName('catalog_category_entity')],
@@ -169,7 +171,13 @@ class Product  extends Base
                 ['c_v_l' => $this->adapter->getTableName('catalog_category_entity_varchar')],
                 'c_v_l.entity_id = c_t.entity_id AND c_v_l.attribute_id = ' . $attributeId . ' AND c_v_l.store_id = ' . $storeId,
                 ['c_v_l.value', 'c_v_l.store_id']
-            );
+            )
+            ->joinLeft(
+                ['c_c_s' => new \Zend_Db_Expr("(" . $statusSql->__toString() .")")],
+                'c_c_s.entity_id = c_t.entity_id',
+                []
+            )
+            ->where("c_c_s.value = '1'");
 
         return $this->adapter->select()
             ->from(
@@ -849,18 +857,33 @@ class Product  extends Base
      */
     public function getParentCategoriesInformation() : array
     {
+        $statusSql = $this->_getCategoriesStatusSql();
+
         $selectTwo = $this->getParentCategoriesInformationSql();
         $selectOne = clone $selectTwo;
         $selectOne->join(
             ['c_c_p' => $this->adapter->getTableName('catalog_category_product')],
             'c_c_p.product_id = c_p_r.parent_id',
             ['category_id']
-        );
+            )
+            ->joinLeft(
+                ['c_c_s' => new \Zend_Db_Expr("(" . $statusSql->__toString() .")")],
+                'c_c_s.entity_id = c_c_p.category_id',
+                []
+            )
+            ->where("c_c_s.value='1'");
+
         $selectTwo->join(
             ['c_c_p' => $this->adapter->getTableName('catalog_category_product')],
             'c_c_p.product_id = c_p_e.entity_id AND c_p_r.parent_id IS NULL',
             ['category_id']
-        );
+            )
+            ->joinLeft(
+                ['c_c_s' => new \Zend_Db_Expr("(" . $statusSql->__toString() .")")],
+                'c_c_s.entity_id = c_c_p.category_id',
+                []
+            )
+            ->where("c_c_s.value='1'");
 
         $select = $this->adapter->select()
             ->union(
@@ -877,6 +900,8 @@ class Product  extends Base
      */
     public function getParentCategoriesInformationByDuplicateIds(array $duplicateIds = []) : array
     {
+        $statusSql = $this->_getCategoriesStatusSql();
+
         $select = $this->adapter->select()
             ->from(
                 ['c_p_e' => $this->adapter->getTableName('catalog_product_entity')],
@@ -885,7 +910,14 @@ class Product  extends Base
                 ['c_c_p' => $this->adapter->getTableName('catalog_category_product')],
                 'c_c_p.product_id = c_p_e.entity_id',
                 ['category_id']
-            )->where('c_p_e.entity_id IN(?)', $duplicateIds);
+            )
+            ->joinLeft(
+                ['c_c_s' => new \Zend_Db_Expr("(" . $statusSql->__toString() .")")],
+                'c_c_s.entity_id = c_c_p.category_id',
+                []
+            )
+            ->where("c_c_s.value='1'")
+            ->where('c_p_e.entity_id IN(?)', $duplicateIds);
 
         return $this->adapter->fetchAll($select);
     }
@@ -1221,6 +1253,16 @@ class Product  extends Base
                 []
             )
             ->where("c_p_e_m_g.value IS NOT NULL");
+    }
+
+    /**
+     * @param int $storeId
+     * @return Select
+     */
+    protected function _getCategoriesStatusSql(int $storeId = 0) : Select
+    {
+        $statusAttributeId = $this->getAttributeIdByAttributeCodeAndEntityType("is_active", CategorySetup::CATEGORY_ENTITY_TYPE_ID);
+        return $this->getEavJoinAttributeSQLByStoreAttrIdTable($statusAttributeId, $storeId, "catalog_category_entity_int", "catalog_category_entity");
     }
 
     /**
