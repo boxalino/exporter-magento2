@@ -919,7 +919,9 @@ class Product extends Base
             }
             $fileName = "categories_$attributeCode.csv";
             $this->_addDataToFile($fileName, $categories);
-            $this->getLibrary()->addExtraTableToEntity($this->getFiles()->getPath($fileName), $this->getComponent(), 'category_id', array_keys(end($categories)));
+            $headers = array_merge(['category_id', 'parent_id'], $this->getLanguageHeaders());
+
+            $this->getLibrary()->addExtraTableToEntity($this->getFiles()->getPath($fileName), $this->getComponent(), 'category_id', $headers);
         }
 
         $this->getLogger()->info("Boxalino Exporter: CATEGORIES ADDITIONAL INFORMATION END.");

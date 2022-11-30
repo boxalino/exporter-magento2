@@ -156,7 +156,7 @@ class Product  extends Base
      */
     protected function _getCategoryInformationByAttributeIdStoreIdSql(int $attributeId, int $storeId) : Select
     {
-        $statusSql = $this->_getCategoriesStatusSql($storeId);
+        $statusSql = $this->_getCategoriesStatusSql(0);
         $select = $this->adapter->select()
             ->from(
                 ['c_t' => $this->adapter->getTableName('catalog_category_entity')],
