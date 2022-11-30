@@ -1,3 +1,12 @@
+# DEPRECATED
+## Notice
+The Data Exporter Layer is replaced by the Data Integration Layer.
+For integrations to come, please use the DI plugin: https://github.com/boxalino/data-integration-magento2
+
+>Get in touch with Boxalino for migrations from Data Exporter to Data Integration.
+> Migration to Data Integration documentation available on wiki https://github.com/boxalino/rtux-integration-magento2/wiki/DI:-Migration-from-Exporter-to-Data-Integration
+
+
 # Boxalino Exporter - Magento2
 
 ## Introduction
